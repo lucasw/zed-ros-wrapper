@@ -20,6 +20,7 @@
 
 #include "zed_wrapper_nodelet.hpp"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <chrono>
 #include <csignal>
 
@@ -426,94 +427,97 @@ void ZEDWrapperNodelet::onInit()
   image_transport::ImageTransport it_zed(mNhNs);
 
   mPubRgb = it_zed.advertiseCamera(rgb_topic, 1);  // rgb
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgb.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgb.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRgb.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRgb.getInfoTopic());
   mPubRawRgb = it_zed.advertiseCamera(rgb_raw_topic, 1);  // rgb raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgb.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgb.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRgb.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRgb.getInfoTopic());
   mPubLeft = it_zed.advertiseCamera(left_topic, 1);  // left
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubLeft.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubLeft.getInfoTopic());
   mPubRawLeft = it_zed.advertiseCamera(left_raw_topic, 1);  // left raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeft.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeft.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawLeft.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawLeft.getInfoTopic());
   mPubRight = it_zed.advertiseCamera(right_topic, 1);  // right
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRight.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRight.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRight.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRight.getInfoTopic());
   mPubRawRight = it_zed.advertiseCamera(right_raw_topic, 1);  // right raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRight.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRight.getInfoTopic());
 
   mPubRgbGray = it_zed.advertiseCamera(rgb_gray_topic, 1);  // rgb
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgbGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgbGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRgbGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRgbGray.getInfoTopic());
   mPubRawRgbGray = it_zed.advertiseCamera(rgb_raw_gray_topic, 1);  // rgb raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgbGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgbGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRgbGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRgbGray.getInfoTopic());
   mPubLeftGray = it_zed.advertiseCamera(left_gray_topic, 1);  // left
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeftGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeftGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubLeftGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubLeftGray.getInfoTopic());
   mPubRawLeftGray = it_zed.advertiseCamera(left_raw_gray_topic, 1);  // left raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeftGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeftGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawLeftGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawLeftGray.getInfoTopic());
   mPubRightGray = it_zed.advertiseCamera(right_gray_topic, 1);  // right
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRightGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRightGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRightGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRightGray.getInfoTopic());
   mPubRawRightGray = it_zed.advertiseCamera(right_raw_gray_topic, 1);  // right raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRightGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRightGray.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRightGray.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawRightGray.getInfoTopic());
 
   mPubDepth = it_zed.advertiseCamera(depth_topic_root, 1);  // depth
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getInfoTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubDepth.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubDepth.getInfoTopic());
 
   mPubStereo = it_zed.advertise(stereo_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubStereo.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubStereo.getTopic());
   mPubRawStereo = it_zed.advertise(stereo_raw_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawStereo.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubRawStereo.getTopic());
+
+  // TODO(lucasw) only use if use_sim_time param is true
+  mPubSimClock = mNhNs.advertise<rosgraph_msgs::Clock>("/clock", 2);
 
   // Confidence Map publisher
   mPubConfMap = mNhNs.advertise<sensor_msgs::Image>(conf_map_topic, 1);  // confidence map
-  NODELET_INFO_STREAM("Advertised on topic " << mPubConfMap.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubConfMap.getTopic());
 
   // Disparity publisher
   mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>(disparityTopic, static_cast<int>(mVideoDepthFreq));
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDisparity.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubDisparity.getTopic());
 
   // PointCloud publishers
   mPubCloud = mNhNs.advertise<sensor_msgs::PointCloud2>(pointcloud_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubCloud.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubCloud.getTopic());
 
   if (mMappingEnabled)
   {
     mPubFusedCloud = mNhNs.advertise<sensor_msgs::PointCloud2>(pointcloud_fused_topic, 1);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubFusedCloud.getTopic() << " @ " << mFusedPcPubFreq << " Hz");
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubFusedCloud.getTopic() << " @ " << mFusedPcPubFreq << " Hz");
   }
 
   // Object detection publishers
   if (mObjDetEnabled)
   {
     mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubObjDet.getTopic());
   }
 
   // Odometry and Pose publisher
   mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>(poseTopic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubPose.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubPose.getTopic());
 
   mPubPoseCov = mNhNs.advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_cov_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubPoseCov.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubPoseCov.getTopic());
 
   mPubOdom = mNhNs.advertise<nav_msgs::Odometry>(odometryTopic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubOdom.getTopic());
+  NODELET_DEBUG_STREAM("Advertised on topic " << mPubOdom.getTopic());
 
   // Camera Path
   if (mPathPubRate > 0)
   {
     mPubOdomPath = mNhNs.advertise<nav_msgs::Path>(odom_path_topic, 1, true);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubOdomPath.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubOdomPath.getTopic());
     mPubMapPath = mNhNs.advertise<nav_msgs::Path>(map_path_topic, 1, true);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubMapPath.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubMapPath.getTopic());
 
     mPathTimer = mNhNs.createTimer(ros::Duration(1.0 / mPathPubRate), &ZEDWrapperNodelet::callback_pubPath, this);
 
@@ -536,27 +540,27 @@ void ZEDWrapperNodelet::onInit()
   {
     // IMU Publishers
     mPubImu = mNhNs.advertise<sensor_msgs::Imu>(imu_topic, 1 /*static_cast<int>(mSensPubRate)*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImu.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubImu.getTopic());
     mPubImuRaw = mNhNs.advertise<sensor_msgs::Imu>(imu_topic_raw, 1 /*static_cast<int>(mSensPubRate)*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImuRaw.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubImuRaw.getTopic());
     mPubImuMag = mNhNs.advertise<sensor_msgs::MagneticField>(imu_mag_topic, 1 /*MAG_FREQ*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImuMag.getTopic());
+    NODELET_DEBUG_STREAM("Advertised on topic " << mPubImuMag.getTopic());
 
     if (mZedRealCamModel == sl::MODEL::ZED2 || mZedRealCamModel == sl::MODEL::ZED2i)
     {
       // IMU temperature sensor
       mPubImuTemp = mNhNs.advertise<sensor_msgs::Temperature>(imu_temp_topic, 1 /*static_cast<int>(mSensPubRate)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubImuTemp.getTopic());
+      NODELET_DEBUG_STREAM("Advertised on topic " << mPubImuTemp.getTopic());
 
       // Atmospheric pressure
       mPubPressure = mNhNs.advertise<sensor_msgs::FluidPressure>(pressure_topic, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubPressure.getTopic());
+      NODELET_DEBUG_STREAM("Advertised on topic " << mPubPressure.getTopic());
 
       // CMOS sensor temperatures
       mPubTempL = mNhNs.advertise<sensor_msgs::Temperature>(temp_topic_left, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubTempL.getTopic());
+      NODELET_DEBUG_STREAM("Advertised on topic " << mPubTempL.getTopic());
       mPubTempR = mNhNs.advertise<sensor_msgs::Temperature>(temp_topic_right, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubTempR.getTopic());
+      NODELET_DEBUG_STREAM("Advertised on topic " << mPubTempR.getTopic());
     }
 
     // Publish camera imu transform in a latched topic
@@ -589,6 +593,7 @@ void ZEDWrapperNodelet::onInit()
 
     if (!mSvoMode && !mSensTimestampSync)
     {
+      NODELET_WARN_STREAM_ONCE("Using current time instead of other time (?)");
       mFrameTimestamp = ros::Time::now();
       mImuTimer = mNhNs.createTimer(ros::Duration(1.0 / (mSensPubRate * 1.5)),
                                     &ZEDWrapperNodelet::callback_pubSensorsData, this);
@@ -626,6 +631,11 @@ void ZEDWrapperNodelet::onInit()
   // Start pool thread
   mDevicePollThread = std::thread(&ZEDWrapperNodelet::device_poll_thread_func, this);
 
+  if (mUseSimTime) {
+    // TODO(lucasw) 0.02-0.05 are probably fine
+    wall_timer_ =  mNhNs.createWallTimer(ros::WallDuration(0.01), &ZEDWrapperNodelet::sim_clock_update, this);
+  }
+
   // Start data publishing timer
   mVideoDepthTimer =
       mNhNs.createTimer(ros::Duration(1.0 / mVideoDepthFreq), &ZEDWrapperNodelet::callback_pubVideoDepth, this);
@@ -634,6 +644,8 @@ void ZEDWrapperNodelet::onInit()
 void ZEDWrapperNodelet::readParameters()
 {
   NODELET_INFO_STREAM("*** GENERAL PARAMETERS ***");
+
+  mNhNs.getParam("/use_sim_time", mUseSimTime);
 
   // ----> General
   // Get parameters from param files
@@ -1150,6 +1162,7 @@ bool ZEDWrapperNodelet::getCamera2BaseTransform()
   }
   catch (tf2::TransformException& ex)
   {
+    NODELET_WARN("failed looked tranform");
     if (!first_error)
     {
       NODELET_DEBUG_THROTTLE(1.0, "Transform error: %s", ex.what());
@@ -1201,6 +1214,7 @@ bool ZEDWrapperNodelet::getSens2CameraTransform()
   }
   catch (tf2::TransformException& ex)
   {
+    NODELET_INFO("look up transform failed");
     if (!first_error)
     {
       NODELET_DEBUG_THROTTLE(1.0, "Transform error: %s", ex.what());
@@ -1599,6 +1613,7 @@ void ZEDWrapperNodelet::start_pos_tracking()
 
   do
   {
+    NODELET_INFO_STREAM("waiting for transforms");
     transformOk = set_pose(mInitialBasePose[0], mInitialBasePose[1], mInitialBasePose[2], mInitialBasePose[3],
                            mInitialBasePose[4], mInitialBasePose[5]);
 
@@ -1776,7 +1791,7 @@ void ZEDWrapperNodelet::publishPose(ros::Time t)
   }
 }
 
-void ZEDWrapperNodelet::publishStaticImuFrame()
+void ZEDWrapperNodelet::publishStaticImuFrame(const ros::Time& stamp)
 {
   // Publish IMU TF as static TF
   if (!mPublishImuTf)
@@ -1789,7 +1804,8 @@ void ZEDWrapperNodelet::publishStaticImuFrame()
     return;
   }
 
-  mStaticImuTransformStamped.header.stamp = ros::Time::now();
+  NODELET_WARN_STREAM_ONCE("static imu transform " << stamp);
+  mStaticImuTransformStamped.header.stamp = stamp;
   mStaticImuTransformStamped.header.frame_id = mLeftCamFrameId;
   mStaticImuTransformStamped.child_frame_id = mImuFrameId;
   sl::Translation sl_tr = mSlCamImuTransf.getTranslation();
@@ -1805,7 +1821,7 @@ void ZEDWrapperNodelet::publishStaticImuFrame()
   // Publish transformation
   mStaticTransformImuBroadcaster.sendTransform(mStaticImuTransformStamped);
 
-  NODELET_INFO_STREAM("Published static transform '" << mImuFrameId << "' -> '" << mLeftCamFrameId << "'");
+  NODELET_INFO_STREAM("Published static transform '" << mImuFrameId << "' -> '" << mLeftCamFrameId << "' " << stamp);
 
   mStaticImuFramePublished = true;
 }
@@ -2700,8 +2716,11 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
   ros::Time stamp = sl_tools::slTime2Ros(grab_ts);
   if (mSvoMode)
   {
-    stamp = ros::Time::now();
+    // grab_ts is 0 when in svo playback mode
+    NODELET_WARN_STREAM_ONCE("Using sim time instead of grab time");
+    stamp = e.current_real;
   }
+  NODELET_INFO_STREAM_ONCE("time " << stamp);
   // <---- Data ROS timestamp
 
   // ----> Publish sensor data if sync is required by user or SVO
@@ -2875,6 +2894,7 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
 
 void ZEDWrapperNodelet::callback_pubPath(const ros::TimerEvent& e)
 {
+  NODELET_INFO_STREAM_ONCE("pub path " << e.current_real);
   uint32_t mapPathSub = mPubMapPath.getNumSubscribers();
   uint32_t odomPathSub = mPubOdomPath.getNumSubscribers();
 
@@ -2956,7 +2976,7 @@ void ZEDWrapperNodelet::callback_pubPath(const ros::TimerEvent& e)
 
 void ZEDWrapperNodelet::callback_pubSensorsData(const ros::TimerEvent& e)
 {
-  // NODELET_INFO("callback_pubSensorsData");
+  NODELET_INFO("callback_pubSensorsData");
   std::lock_guard<std::mutex> lock(mCloseZedMutex);
 
   if (!mZed.isOpened())
@@ -3037,10 +3057,12 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
   }
   else
   {
+    // TODO(lucasw) probably these need to be used in pub sim time mode
     ts_imu = sl_tools::slTime2Ros(sens_data.imu.timestamp);
     ts_baro = sl_tools::slTime2Ros(sens_data.barometer.timestamp);
     ts_mag = sl_tools::slTime2Ros(sens_data.magnetometer.timestamp);
   }
+  // TODO(lucasw) in svo mode the above timestamps need to be set to ros::Time::now()?
 
   bool new_imu_data = ts_imu != lastTs_imu;
   bool new_baro_data = ts_baro != lastTs_baro;
@@ -3069,7 +3091,7 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
   if (mPublishImuTf && !mStaticImuFramePublished)
   {
     NODELET_DEBUG("Publishing static IMU TF");
-    publishStaticImuFrame();
+    publishStaticImuFrame(ts_imu);
   }
 
   if (mZedRealCamModel == sl::MODEL::ZED2 || mZedRealCamModel == sl::MODEL::ZED2i)
@@ -3371,6 +3393,30 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
   // <---- Update Diagnostic
 }
 
+void ZEDWrapperNodelet::publishSimClock(const ros::Time& stamp)
+{
+  {
+    boost::posix_time::ptime posix_time = mFrameTimestamp.toBoost();
+    const std::string iso_time_str = boost::posix_time::to_iso_extended_string(posix_time);
+    // NODELET_INFO_STREAM_THROTTLE(1.0, "time " << iso_time_str);
+    NODELET_INFO_STREAM_ONCE("time " << iso_time_str);
+  }
+
+  NODELET_WARN_STREAM_ONCE("using sim clock " << stamp);
+  rosgraph_msgs::Clock clock;
+  clock.clock = stamp;
+  mPubSimClock.publish(clock);
+}
+
+void ZEDWrapperNodelet::sim_clock_update(const ros::WallTimerEvent& e)
+{
+  // TODO(lucasw) mutex
+  publishSimClock(sim_clock_base_time);
+  // TODO(lucasw) have ability to roll forward faster than real time
+  sim_clock_base_time += ros::Duration(0.001);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
 void ZEDWrapperNodelet::device_poll_thread_func()
 {
   ros::Rate loop_rate(mCamFrameRate);
@@ -3386,12 +3432,16 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   // Timestamp initialization
   if (mSvoMode)
   {
-    mFrameTimestamp = ros::Time::now();
+    mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+    NODELET_WARN_STREAM_ONCE("Using zed image time " << mFrameTimestamp);
   }
   else
   {
     mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
   }
+
+  // TODO(lucasw) mutex
+  sim_clock_base_time = mFrameTimestamp;
 
   mPrevFrameTimestamp = mFrameTimestamp;
 
@@ -3430,6 +3480,8 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   sl::RuntimeParameters runParams;
   runParams.sensing_mode = static_cast<sl::SENSING_MODE>(mCamSensingMode);
 
+  // TODO(lucasw) is there a call to mZed in here that rolls it forward a frame in mSvoMode, or does it
+  // have a timer and keeps time independently, can only do real time?
   // Main loop
   while (mNhNs.ok())
   {
@@ -3537,6 +3589,8 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         // the zed have been disconnected) and
         // re-initialize the ZED
 
+        // TODO(lucasw) if the status is END OF SVO FILE REACHED then loop it optionally,
+        // or exit.
         NODELET_INFO_STREAM_ONCE(toString(mGrabStatus));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -3634,8 +3688,9 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       // NODELET_INFO_STREAM("Grab time: " << elapsed_usec / 1000 << " msec");
 
       // Timestamp
-      if (mSvoMode)
+      if (mSvoMode && !mUseSimTime)
       {
+        NODELET_WARN_STREAM_ONCE("Using current time instead of image time");
         mFrameTimestamp = ros::Time::now();
       }
       else
@@ -3644,6 +3699,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       }
 
       ros::Time stamp = mFrameTimestamp;  // Timestamp
+      sim_clock_base_time = stamp;
 
       // ----> Camera Settings
       if (!mSvoMode && mFrameCount % 5 == 0)
@@ -4100,9 +4156,9 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         if (mPublishTf)
         {
           ros::Time t;
-
-          if (mSvoMode)
+          if (mSvoMode)  // && !mUseSimTime)
           {
+            NODELET_WARN_STREAM_ONCE("Using current time instead of zed time");
             t = ros::Time::now();
           }
           else
@@ -4119,7 +4175,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
           if (mPublishImuTf && !mStaticImuFramePublished)
           {
-            publishStaticImuFrame();
+            publishStaticImuFrame(t);
           }
         }
       }
