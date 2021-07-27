@@ -129,6 +129,10 @@ protected:
    */
   void sim_clock_update(const ros::WallTimerEvent& e);
 
+  /*! \brief get ZED image time or current time depending on params
+   */
+  ros::Time getTimestamp();
+
   /*! \brief ZED camera polling thread function
    */
   void device_poll_thread_func();

@@ -595,8 +595,8 @@ void ZEDWrapperNodelet::onInit()
 
     if (!mSvoMode && !mSensTimestampSync)
     {
-      NODELET_WARN_STREAM_ONCE("Using current time instead of other time (?)");
-      mFrameTimestamp = ros::Time::now();
+      // init so sensor callback will have a timestamp to work with on first publish
+      mFrameTimestamp = getTimestamp();
       mImuTimer = mNhNs.createTimer(ros::Duration(1.0 / (mSensPubRate * 1.5)),
                                     &ZEDWrapperNodelet::callback_pubSensorsData, this);
       mSensPeriodMean_usec.reset(new sl_tools::CSmartMean(mSensPubRate / 2));
@@ -646,8 +646,6 @@ void ZEDWrapperNodelet::onInit()
 void ZEDWrapperNodelet::readParameters()
 {
   NODELET_INFO_STREAM("*** GENERAL PARAMETERS ***");
-
-  mNhNs.getParam("/use_sim_time", mUseSimTime);
 
   // ----> General
   // Get parameters from param files
@@ -879,6 +877,9 @@ void ZEDWrapperNodelet::readParameters()
   // ----> SVO
   mNhNs.param<std::string>("svo_file", mSvoFilepath, std::string());
   NODELET_INFO_STREAM(" * SVO input file: \t\t-> " << mSvoFilepath.c_str());
+
+  mNhNs.getParam("/use_sim_time", mUseSimTime);
+  NODELET_INFO_STREAM(" * Use Sim Time\t\t\t-> " << mUseSimTime);
 
   int svo_compr = 0;
   mNhNs.getParam("general/svo_compression", svo_compr);
@@ -2716,7 +2717,6 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
   if (mSvoMode)
   {
     // grab_ts is 0 when in svo playback mode
-    NODELET_WARN_STREAM_ONCE("Using sim time instead of grab time");
     stamp = e.current_real;
   }
   NODELET_INFO_STREAM_ONCE("time " << stamp);
@@ -3031,6 +3031,7 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
 
   sl::SensorsData sens_data;
 
+  // TODO(lucasw) is a mUseSimTime check needed in here?
   if (mSvoMode || mSensTimestampSync)
   {
     if (mZed.getSensorsData(sens_data, sl::TIME_REFERENCE::IMAGE) != sl::ERROR_CODE::SUCCESS)
@@ -3086,7 +3087,7 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
 
     if (mPublishImuTf && !mStaticImuFramePublished)
     {
-      publishStaticImuFrame(lastTs_imu);
+      publishStaticImuFrame(ts_imu);
     }
   }
   // <---- Publish odometry tf only if enabled
@@ -3393,7 +3394,7 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
 void ZEDWrapperNodelet::publishSimClock(const ros::Time& stamp)
 {
   {
-    boost::posix_time::ptime posix_time = mFrameTimestamp.toBoost();
+    boost::posix_time::ptime posix_time = stamp.toBoost();
     const std::string iso_time_str = boost::posix_time::to_iso_extended_string(posix_time);
     // NODELET_INFO_STREAM_THROTTLE(1.0, "time " << iso_time_str);
     NODELET_INFO_STREAM_ONCE("time " << iso_time_str);
@@ -3403,6 +3404,27 @@ void ZEDWrapperNodelet::publishSimClock(const ros::Time& stamp)
   rosgraph_msgs::Clock clock;
   clock.clock = stamp;
   mPubSimClock.publish(clock);
+}
+
+ros::Time ZEDWrapperNodelet::getTimestamp()
+{
+  ros::Time stamp;
+  if (mSvoMode && !mUseSimTime)
+  {
+    // TODO(lucasw) does it matter which one?
+    stamp = ros::Time::now();
+    // mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
+    NODELET_WARN_STREAM_ONCE("Using current time instead of image time " << stamp);
+  }
+  else
+  {
+    // TODO(lucasw) if no images have arrived yet, this is zero, or something else?
+    // In the svo file it appears to be something else, slightly in advance of the first
+    // frame.
+    stamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+    NODELET_WARN_STREAM_ONCE("Using zed image time " << stamp);
+  }
+  return stamp;
 }
 
 void ZEDWrapperNodelet::sim_clock_update(const ros::WallTimerEvent& e)
@@ -3427,15 +3449,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   mObjDetPeriodMean_msec.reset(new sl_tools::CSmartMean(mCamFrameRate));
 
   // Timestamp initialization
-  if (mSvoMode)
-  {
-    mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-    NODELET_WARN_STREAM_ONCE("Using zed image time " << mFrameTimestamp);
-  }
-  else
-  {
-    mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
-  }
+  mFrameTimestamp = getTimestamp();
 
   // TODO(lucasw) mutex
   sim_clock_base_time = mFrameTimestamp;
@@ -3682,20 +3696,9 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
       mGrabPeriodMean_usec->addValue(elapsed_usec);
 
-      // NODELET_INFO_STREAM("Grab time: " << elapsed_usec / 1000 << " msec");
+      mFrameTimestamp = getTimestamp();
 
-      // Timestamp
-      if (mSvoMode && !mUseSimTime)
-      {
-        NODELET_WARN_STREAM_ONCE("Using current time instead of image time");
-        mFrameTimestamp = ros::Time::now();
-      }
-      else
-      {
-        mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-      }
-
-      ros::Time stamp = mFrameTimestamp;  // Timestamp
+      const ros::Time stamp = mFrameTimestamp;  // Timestamp
       sim_clock_base_time = stamp;
 
       // ----> Camera Settings
@@ -4028,7 +4031,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
             if (odomSubnumber > 0)
             {
               // Publish odometry message
-              publishOdom(mOdom2BaseTransf, mLastZedPose, mFrameTimestamp);
+              publishOdom(mOdom2BaseTransf, mLastZedPose, stamp);
             }
 
             mInitOdomWithPose = false;
@@ -4152,22 +4155,13 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         // Publish odometry tf only if enabled
         if (mPublishTf)
         {
-          ros::Time t;
-          if (mSvoMode)  // && !mUseSimTime)
-          {
-            NODELET_WARN_STREAM_ONCE("Using current time instead of zed time");
-            t = ros::Time::now();
-          }
-          else
-          {
-            t = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
-          }
+          const ros::Time t = getTimestamp();
 
-          publishOdomFrame(mOdom2BaseTransf, mFrameTimestamp);  // publish the base Frame in odometry frame
+          publishOdomFrame(mOdom2BaseTransf, t);  // publish the base Frame in odometry frame
 
           if (mPublishMapTf)
           {
-            publishPoseFrame(mMap2OdomTransf, mFrameTimestamp);  // publish the odometry Frame in map frame
+            publishPoseFrame(mMap2OdomTransf, t);  // publish the odometry Frame in map frame
           }
 
           if (mPublishImuTf && !mStaticImuFramePublished)
