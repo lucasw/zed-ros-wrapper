@@ -2975,7 +2975,7 @@ void ZEDWrapperNodelet::callback_pubPath(const ros::TimerEvent& e)
 
 void ZEDWrapperNodelet::callback_pubSensorsData(const ros::TimerEvent& e)
 {
-  NODELET_INFO("callback_pubSensorsData");
+  // NODELET_INFO("callback_pubSensorsData");
   std::lock_guard<std::mutex> lock(mCloseZedMutex);
 
   if (!mZed.isOpened())
@@ -3696,6 +3696,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
       mGrabPeriodMean_usec->addValue(elapsed_usec);
 
+      // NODELET_INFO_STREAM("Grab time: " << elapsed_usec / 1000 << " msec");
       mFrameTimestamp = getTimestamp();
 
       const ros::Time stamp = mFrameTimestamp;  // Timestamp
@@ -4155,6 +4156,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         // Publish odometry tf only if enabled
         if (mPublishTf)
         {
+          // TODO(lucasw) or just ust mFrameTimestamp?
           const ros::Time t = getTimestamp();
 
           publishOdomFrame(mOdom2BaseTransf, t);  // publish the base Frame in odometry frame
