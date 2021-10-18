@@ -477,6 +477,7 @@ private:
   int mDepthStabilization;
   std::string mAreaMemDbPath;
   std::string mSvoFilepath;
+  std::string mRecordSvoFilepath;
   std::string mRemoteStreamAddr;
   bool mSensTimestampSync;
   double mPathPubRate;

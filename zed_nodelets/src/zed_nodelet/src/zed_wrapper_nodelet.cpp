@@ -542,6 +542,18 @@ void ZEDWrapperNodelet::onInit()
       mNhNs.advertiseService("start_svo_recording", &ZEDWrapperNodelet::on_start_svo_recording, this);
   mSrvSvoStopRecording = mNhNs.advertiseService("stop_svo_recording", &ZEDWrapperNodelet::on_stop_svo_recording, this);
 
+  // start recording immediately
+  if (mRecordSvoFilepath != "") {
+    zed_interfaces::start_svo_recording::Request req;
+    req.svo_filename = mRecordSvoFilepath;
+    zed_interfaces::start_svo_recording::Response res;
+    on_start_svo_recording(req, res);
+    if (res.result == false) {
+      ROS_ERROR_STREAM(res.info);
+      return;
+    }
+  }
+
   mSrvSetLedStatus = mNhNs.advertiseService("set_led_status", &ZEDWrapperNodelet::on_set_led_status, this);
   mSrvToggleLed = mNhNs.advertiseService("toggle_led", &ZEDWrapperNodelet::on_toggle_led, this);
   mSrvSvoStartStream = mNhNs.advertiseService("start_remote_stream", &ZEDWrapperNodelet::on_start_remote_stream, this);
@@ -710,6 +722,12 @@ void ZEDWrapperNodelet::readParameters()
   // ----> SVO
   mNhNs.param<std::string>("svo_file", mSvoFilepath, std::string());
   NODELET_INFO_STREAM(" * SVO input file: \t\t-> " << mSvoFilepath.c_str());
+
+  mNhNs.param<std::string>("record_svo_file", mRecordSvoFilepath, std::string());
+  if (mRecordSvoFilepath != "") {
+   // NODELET_WARN_STREAM(" * Record SVO input file: \t\t-> " << mRecordSvoFilepath.c_str());
+  }
+  NODELET_WARN_STREAM(" * Record SVO input file: \t\t-> '" << mRecordSvoFilepath << "'");
 
   mNhNs.getParam("/use_sim_time", mUseSimTime);
   NODELET_INFO_STREAM(" * Use Sim Time\t\t\t-> " << mUseSimTime);
