@@ -32,7 +32,6 @@
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
 #include <rosgraph_msgs/Clock.h>
-#include <sensor_msgs/PointCloud2.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -46,12 +45,8 @@
 #include <zed_interfaces/reset_tracking.h>
 #include <zed_interfaces/set_led_status.h>
 #include <zed_interfaces/set_pose.h>
-#include <zed_interfaces/start_3d_mapping.h>
-#include <zed_interfaces/start_object_detection.h>
 #include <zed_interfaces/start_remote_stream.h>
 #include <zed_interfaces/start_svo_recording.h>
-#include <zed_interfaces/stop_3d_mapping.h>
-#include <zed_interfaces/stop_object_detection.h>
 #include <zed_interfaces/stop_remote_stream.h>
 #include <zed_interfaces/stop_svo_recording.h>
 #include <zed_interfaces/toggle_led.h>
@@ -137,10 +132,6 @@ protected:
    */
   void device_poll_thread_func();
 
-  /*! \brief Pointcloud publishing function
-   */
-  void pointcloud_thread_func();
-
   /*! \brief Publish the pose of the camera in "Map" frame with a ros Publisher
    * \param t : the ros::Time to stamp the image
    */
@@ -193,14 +184,6 @@ protected:
    * \param t : the ros::Time to stamp the depth image
    */
   void publishDepth(sensor_msgs::ImagePtr imgMsgPtr, sl::Mat depth, ros::Time t);
-
-  /*! \brief Publish a single pointCloud with a ros Publisher
-   */
-  void publishPointCloud();
-
-  /*! \brief Publish a fused pointCloud with a ros Publisher
-   */
-  void callback_pubFusedPointCloud(const ros::TimerEvent& e);
 
   /*! \brief Publish the informations of a camera with a ros Publisher
    * \param cam_info_msg : the information message to publish
@@ -318,26 +301,6 @@ protected:
    */
   bool on_toggle_led(zed_interfaces::toggle_led::Request& req, zed_interfaces::toggle_led::Response& res);
 
-  /*! \brief Service callback to start_3d_mapping service
-   */
-  bool on_start_3d_mapping(zed_interfaces::start_3d_mapping::Request& req,
-                           zed_interfaces::start_3d_mapping::Response& res);
-
-  /*! \brief Service callback to stop_3d_mapping service
-   */
-  bool on_stop_3d_mapping(zed_interfaces::stop_3d_mapping::Request& req,
-                          zed_interfaces::stop_3d_mapping::Response& res);
-
-  /*! \brief Service callback to start_object_detection service
-   */
-  bool on_start_object_detection(zed_interfaces::start_object_detection::Request& req,
-                                 zed_interfaces::start_object_detection::Response& res);
-
-  /*! \brief Service callback to stop_object_detection service
-   */
-  bool on_stop_object_detection(zed_interfaces::stop_object_detection::Request& req,
-                                zed_interfaces::stop_object_detection::Response& res);
-
   /*! \brief Utility to initialize the pose variables
    */
   bool set_pose(float xt, float yt, float zt, float rr, float pr, float yr);
@@ -361,26 +324,6 @@ protected:
   /* \bried Start tracking
    */
   void start_pos_tracking();
-
-  /* \bried Start spatial mapping
-   */
-  bool start_3d_mapping();
-
-  /* \bried Stop spatial mapping
-   */
-  void stop_3d_mapping();
-
-  /* \bried Start object detection
-   */
-  bool start_obj_detect();
-
-  /* \bried Stop object detection
-   */
-  void stop_obj_detect();
-
-  /*! \brief Publish object detection results
-   */
-  void processDetectedObjects(ros::Time t);
 
   /*! \brief Generates an univoque color for each object class ID
    */
@@ -438,7 +381,6 @@ private:
   ros::Publisher mPubConfMap;    //
   ros::Publisher mPubDisparity;  //
   ros::Publisher mPubCloud;
-  ros::Publisher mPubFusedCloud;
   ros::Publisher mPubPose;
   ros::Publisher mPubPoseCov;
   ros::Publisher mPubOdom;
@@ -457,7 +399,6 @@ private:
   // Timers
   ros::Timer mImuTimer;
   ros::Timer mPathTimer;
-  ros::Timer mFusedPcTimer;
   ros::Timer mVideoDepthTimer;
 
   // Services
@@ -470,10 +411,6 @@ private:
   ros::ServiceServer mSrvSvoStopStream;
   ros::ServiceServer mSrvSetLedStatus;
   ros::ServiceServer mSrvToggleLed;
-  ros::ServiceServer mSrvStartMapping;
-  ros::ServiceServer mSrvStopMapping;
-  ros::ServiceServer mSrvStartObjDet;
-  ros::ServiceServer mSrvStopObjDet;
 
   // ----> Topics (ONLY THOSE NOT CHANGING WHILE NODE RUNS)
   // Camera info
@@ -506,7 +443,6 @@ private:
   std::string mConfidenceOptFrameId;
 
   std::string mCloudFrameId;
-  std::string mPointCloudFrameId;
 
   std::string mMapFrameId;
   std::string mOdometryFrameId;
@@ -563,7 +499,6 @@ private:
   sl::ERROR_CODE mGrabStatus;
   sl::POSITIONAL_TRACKING_STATE mPosTrackingStatus;
   bool mSensPublishing = false;
-  bool mPcPublishing = false;
 
   // Last frame time
   ros::Time mPrevFrameTimestamp;
@@ -621,7 +556,6 @@ private:
 
   int mCamDepthConfidence = 50;
   int mCamDepthTextureConf = 100;
-  double mPointCloudFreq = 15.;
   double mVideoDepthFreq = 15.;
 
   double mCamImageResizeFactor = 1.0;
@@ -662,17 +596,10 @@ private:
   std::mutex mRecMutex;
   std::mutex mPosTrkMutex;
   std::mutex mDynParMutex;
-  std::mutex mMappingMutex;
-  std::mutex mObjDetMutex;
   std::condition_variable mPcDataReadyCondVar;
   bool mPcDataReady;
   std::condition_variable mRgbDepthDataRetrievedCondVar;
   bool mRgbDepthDataRetrieved;
-
-  // Point cloud variables
-  sl::Mat mCloud;
-  sl::FusedPointCloud mFusedPC;
-  ros::Time mPointCloudTime;
 
   // Dynamic reconfigure
   boost::recursive_mutex mDynServerMutex;  // To avoid Dynamic Reconfigure Server warning
@@ -684,41 +611,13 @@ private:
   std::unique_ptr<sl_tools::CSmartMean> mElabPeriodMean_sec;
   std::unique_ptr<sl_tools::CSmartMean> mGrabPeriodMean_usec;
   std::unique_ptr<sl_tools::CSmartMean> mVideoDepthPeriodMean_sec;
-  std::unique_ptr<sl_tools::CSmartMean> mPcPeriodMean_usec;
   std::unique_ptr<sl_tools::CSmartMean> mSensPeriodMean_usec;
-  std::unique_ptr<sl_tools::CSmartMean> mObjDetPeriodMean_msec;
 
   diagnostic_updater::Updater mDiagUpdater;  // Diagnostic Updater
 
   // Camera IMU transform
   sl::Transform mSlCamImuTransf;
   geometry_msgs::TransformStamped mStaticImuTransformStamped;
-
-  // Spatial mapping
-  bool mMappingEnabled;
-  bool mMappingRunning;
-  float mMappingRes = 0.1;
-  float mMaxMappingRange = -1;
-  double mFusedPcPubFreq = 2.0;
-
-  // Object Detection
-  bool mObjDetEnabled = false;
-  bool mObjDetRunning = false;
-  bool mObjDetTracking = true;
-  bool mObjDetBodyFitting = true;
-  float mObjDetConfidence = 50.f;
-  float mObjDetMaxRange = 10.f;
-  std::vector<sl::OBJECT_CLASS> mObjDetFilter;
-  bool mObjDetPeopleEnable = true;
-  bool mObjDetVehiclesEnable = true;
-  bool mObjDetBagsEnable = true;
-  bool mObjDetAnimalsEnable = true;
-  bool mObjDetElectronicsEnable = true;
-  bool mObjDetFruitsEnable = true;
-
-  sl::DETECTION_MODEL mObjDetModel = sl::DETECTION_MODEL::MULTI_CLASS_BOX;
-
-  ros::Publisher mPubObjDet;
 };  // class ZEDROSWrapperNodelet
 }  // namespace zed_nodelets
 

@@ -28,9 +28,6 @@
 #include <ros/console.h>
 #endif
 
-#include "zed_interfaces/Object.h"
-#include "zed_interfaces/ObjectsStamped.h"
-
 //#define DEBUG_SENS_TS 1
 
 namespace zed_nodelets
@@ -68,7 +65,6 @@ void ZEDWrapperNodelet::onInit()
 
   mStopNode = false;
   mPcDataReady = false;
-  mRgbDepthDataRetrieved = true;
 
 #ifndef NDEBUG
 
@@ -101,26 +97,13 @@ void ZEDWrapperNodelet::onInit()
   std::string rgbTopicRoot = "rgb";
   std::string rightTopicRoot = "right";
   std::string leftTopicRoot = "left";
-  std::string stereoTopicRoot = "stereo";
   std::string img_topic = "/image_rect_color";
   std::string img_raw_topic = "/image_raw_color";
-  std::string img_gray_topic = "/image_rect_gray";
-  std::string img_raw_gray_topic_ = "/image_raw_gray";
   std::string raw_suffix = "_raw";
   string left_topic = leftTopicRoot + img_topic;
   string left_raw_topic = leftTopicRoot + raw_suffix + img_raw_topic;
   string right_topic = rightTopicRoot + img_topic;
   string right_raw_topic = rightTopicRoot + raw_suffix + img_raw_topic;
-  string rgb_topic = rgbTopicRoot + img_topic;
-  string rgb_raw_topic = rgbTopicRoot + raw_suffix + img_raw_topic;
-  string stereo_topic = stereoTopicRoot + img_topic;
-  string stereo_raw_topic = stereoTopicRoot + raw_suffix + img_raw_topic;
-  string left_gray_topic = leftTopicRoot + img_gray_topic;
-  string left_raw_gray_topic = leftTopicRoot + raw_suffix + img_raw_gray_topic_;
-  string right_gray_topic = rightTopicRoot + img_gray_topic;
-  string right_raw_gray_topic = rightTopicRoot + raw_suffix + img_raw_gray_topic_;
-  string rgb_gray_topic = rgbTopicRoot + img_gray_topic;
-  string rgb_raw_gray_topic = rgbTopicRoot + raw_suffix + img_raw_gray_topic_;
 
   // Set the disparity topic name
   std::string disparityTopic = "disparity/disparity_image";
@@ -133,13 +116,6 @@ void ZEDWrapperNodelet::onInit()
     NODELET_INFO_STREAM("Openni depth mode activated -> Units: mm, Encoding: TYPE_16UC1");
   }
   depth_topic_root += "/depth_registered";
-
-  string pointcloud_topic = "point_cloud/cloud_registered";
-
-  string pointcloud_fused_topic = "mapping/fused_cloud";
-
-  string object_det_topic_root = "obj_det";
-  string object_det_topic = object_det_topic_root + "/objects";
 
   std::string confImgRoot = "confidence";
   string conf_map_topic_name = "confidence_map";
@@ -155,10 +131,8 @@ void ZEDWrapperNodelet::onInit()
   string map_path_topic = "path_map";
 
   // Create camera info
-  mRgbCamInfoMsg.reset(new sensor_msgs::CameraInfo());
   mLeftCamInfoMsg.reset(new sensor_msgs::CameraInfo());
   mRightCamInfoMsg.reset(new sensor_msgs::CameraInfo());
-  mRgbCamInfoRawMsg.reset(new sensor_msgs::CameraInfo());
   mLeftCamInfoRawMsg.reset(new sensor_msgs::CameraInfo());
   mRightCamInfoRawMsg.reset(new sensor_msgs::CameraInfo());
   mDepthCamInfoMsg.reset(new sensor_msgs::CameraInfo());
@@ -426,12 +400,6 @@ void ZEDWrapperNodelet::onInit()
   // Image publishers
   image_transport::ImageTransport it_zed(mNhNs);
 
-  mPubRgb = it_zed.advertiseCamera(rgb_topic, 1);  // rgb
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgb.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgb.getInfoTopic());
-  mPubRawRgb = it_zed.advertiseCamera(rgb_raw_topic, 1);  // rgb raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgb.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgb.getInfoTopic());
   mPubLeft = it_zed.advertiseCamera(left_topic, 1);  // left
   NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getTopic());
   NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getInfoTopic());
@@ -445,33 +413,9 @@ void ZEDWrapperNodelet::onInit()
   NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getTopic());
   NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getInfoTopic());
 
-  mPubRgbGray = it_zed.advertiseCamera(rgb_gray_topic, 1);  // rgb
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgbGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRgbGray.getInfoTopic());
-  mPubRawRgbGray = it_zed.advertiseCamera(rgb_raw_gray_topic, 1);  // rgb raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgbGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRgbGray.getInfoTopic());
-  mPubLeftGray = it_zed.advertiseCamera(left_gray_topic, 1);  // left
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeftGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeftGray.getInfoTopic());
-  mPubRawLeftGray = it_zed.advertiseCamera(left_raw_gray_topic, 1);  // left raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeftGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeftGray.getInfoTopic());
-  mPubRightGray = it_zed.advertiseCamera(right_gray_topic, 1);  // right
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRightGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRightGray.getInfoTopic());
-  mPubRawRightGray = it_zed.advertiseCamera(right_raw_gray_topic, 1);  // right raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRightGray.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRightGray.getInfoTopic());
-
   mPubDepth = it_zed.advertiseCamera(depth_topic_root, 1);  // depth
   NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getTopic());
   NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getInfoTopic());
-
-  mPubStereo = it_zed.advertise(stereo_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubStereo.getTopic());
-  mPubRawStereo = it_zed.advertise(stereo_raw_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawStereo.getTopic());
 
   if (mUseSimTime)
   {
@@ -485,23 +429,6 @@ void ZEDWrapperNodelet::onInit()
   // Disparity publisher
   mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>(disparityTopic, static_cast<int>(mVideoDepthFreq));
   NODELET_INFO_STREAM("Advertised on topic " << mPubDisparity.getTopic());
-
-  // PointCloud publishers
-  mPubCloud = mNhNs.advertise<sensor_msgs::PointCloud2>(pointcloud_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubCloud.getTopic());
-
-  if (mMappingEnabled)
-  {
-    mPubFusedCloud = mNhNs.advertise<sensor_msgs::PointCloud2>(pointcloud_fused_topic, 1);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubFusedCloud.getTopic() << " @ " << mFusedPcPubFreq << " Hz");
-  }
-
-  // Object detection publishers
-  if (mObjDetEnabled)
-  {
-    mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
-  }
 
   // Odometry and Pose publisher
   mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>(poseTopic, 1);
@@ -619,16 +546,6 @@ void ZEDWrapperNodelet::onInit()
   mSrvToggleLed = mNhNs.advertiseService("toggle_led", &ZEDWrapperNodelet::on_toggle_led, this);
   mSrvSvoStartStream = mNhNs.advertiseService("start_remote_stream", &ZEDWrapperNodelet::on_start_remote_stream, this);
   mSrvSvoStopStream = mNhNs.advertiseService("stop_remote_stream", &ZEDWrapperNodelet::on_stop_remote_stream, this);
-
-  mSrvStartMapping = mNhNs.advertiseService("start_3d_mapping", &ZEDWrapperNodelet::on_start_3d_mapping, this);
-  mSrvStopMapping = mNhNs.advertiseService("stop_3d_mapping", &ZEDWrapperNodelet::on_stop_3d_mapping, this);
-
-  mSrvStartObjDet =
-      mNhNs.advertiseService("start_object_detection", &ZEDWrapperNodelet::on_start_object_detection, this);
-  mSrvStopObjDet = mNhNs.advertiseService("stop_object_detection", &ZEDWrapperNodelet::on_stop_object_detection, this);
-
-  // Start Pointcloud thread
-  mPcThread = std::thread(&ZEDWrapperNodelet::pointcloud_thread_func, this);
 
   // Start pool thread
   mDevicePollThread = std::thread(&ZEDWrapperNodelet::device_poll_thread_func, this);
@@ -781,90 +698,6 @@ void ZEDWrapperNodelet::readParameters()
   }
   // <---- Tracking
 
-  NODELET_INFO_STREAM("*** MAPPING PARAMETERS ***");
-
-  // ----> Mapping
-  mNhNs.param<bool>("mapping/mapping_enabled", mMappingEnabled, false);
-
-  if (mMappingEnabled)
-  {
-    NODELET_INFO_STREAM(" * Mapping\t\t\t-> ENABLED");
-
-    mNhNs.getParam("mapping/resolution", mMappingRes);
-    NODELET_INFO_STREAM(" * Mapping resolution\t\t-> " << mMappingRes << " m");
-
-    mNhNs.getParam("mapping/max_mapping_range", mMaxMappingRange);
-    NODELET_INFO_STREAM(" * Mapping max range\t\t-> " << mMaxMappingRange << " m"
-                                                      << ((mMaxMappingRange < 0.0) ? " [AUTO]" : ""));
-
-    mNhNs.getParam("mapping/fused_pointcloud_freq", mFusedPcPubFreq);
-    NODELET_INFO_STREAM(" * Fused point cloud freq:\t-> " << mFusedPcPubFreq << " Hz");
-  }
-  else
-  {
-    NODELET_INFO_STREAM(" * Mapping\t\t\t-> DISABLED");
-  }
-  // <---- Mapping
-
-  NODELET_INFO_STREAM("*** OBJECT DETECTION PARAMETERS ***");
-
-  // ----> Object Detection
-  mNhNs.param<bool>("object_detection/od_enabled", mObjDetEnabled, false);
-
-  if (mObjDetEnabled)
-  {
-    NODELET_INFO_STREAM(" * Object Detection\t\t-> ENABLED");
-    mNhNs.getParam("object_detection/confidence_threshold", mObjDetConfidence);
-    NODELET_INFO_STREAM(" * Object confidence\t\t-> " << mObjDetConfidence);
-    mNhNs.getParam("object_detection/object_tracking_enabled", mObjDetTracking);
-    NODELET_INFO_STREAM(" * Object tracking\t\t-> " << (mObjDetTracking ? "ENABLED" : "DISABLED"));
-    mNhNs.getParam("object_detection/max_range", mObjDetMaxRange);
-    if (mObjDetMaxRange > mCamMaxDepth)
-    {
-      NODELET_WARN("Detection max range cannot be major than depth max range. Automatically fixed.");
-      mObjDetMaxRange = mCamMaxDepth;
-    }
-    NODELET_INFO_STREAM(" * Detection max range\t\t-> " << mObjDetMaxRange);
-
-    int model;
-    mNhNs.getParam("object_detection/model", model);
-    if (model < 0 || model >= static_cast<int>(sl::DETECTION_MODEL::LAST))
-    {
-      NODELET_WARN("Detection model not valid. Forced to the default value");
-      model = static_cast<int>(mObjDetModel);
-    }
-    mObjDetModel = static_cast<sl::DETECTION_MODEL>(model);
-
-    NODELET_INFO_STREAM(" * Detection model\t\t-> " << sl::toString(mObjDetModel));
-
-    if (mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_FAST ||
-        mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_ACCURATE)
-    {
-      mNhNs.getParam("object_detection/body_fitting", mObjDetBodyFitting);
-      NODELET_INFO_STREAM(" * Body fitting\t\t\t-> " << (mObjDetBodyFitting ? "ENABLED" : "DISABLED"));
-    }
-    else
-    {
-      mNhNs.getParam("object_detection/mc_people", mObjDetPeopleEnable);
-      NODELET_INFO_STREAM(" * Detect people\t\t-> " << (mObjDetPeopleEnable ? "ENABLED" : "DISABLED"));
-      mNhNs.getParam("object_detection/mc_vehicle", mObjDetVehiclesEnable);
-      NODELET_INFO_STREAM(" * Detect vehicles\t\t-> " << (mObjDetVehiclesEnable ? "ENABLED" : "DISABLED"));
-      mNhNs.getParam("object_detection/mc_bag", mObjDetBagsEnable);
-      NODELET_INFO_STREAM(" * Detect bags\t\t\t-> " << (mObjDetBagsEnable ? "ENABLED" : "DISABLED"));
-      mNhNs.getParam("object_detection/mc_animal", mObjDetAnimalsEnable);
-      NODELET_INFO_STREAM(" * Detect animals\t\t-> " << (mObjDetAnimalsEnable ? "ENABLED" : "DISABLED"));
-      mNhNs.getParam("object_detection/mc_electronics", mObjDetElectronicsEnable);
-      NODELET_INFO_STREAM(" * Detect electronics\t\t-> " << (mObjDetElectronicsEnable ? "ENABLED" : "DISABLED"));
-      mNhNs.getParam("object_detection/mc_fruit_vegetable", mObjDetFruitsEnable);
-      NODELET_INFO_STREAM(" * Detect fruit and vegetables\t-> " << (mObjDetFruitsEnable ? "ENABLED" : "DISABLED"));
-    }
-  }
-  else
-  {
-    NODELET_INFO_STREAM(" * Object Detection\t\t-> DISABLED");
-  }
-  // <---- Object Detection
-
   NODELET_INFO_STREAM("*** SENSORS PARAMETERS ***");
 
   // ----> Sensors
@@ -924,8 +757,6 @@ void ZEDWrapperNodelet::readParameters()
 
   // Note: Depth image frame id must match color image frame id
   mCloudFrameId = mDepthOptFrameId;
-  mRgbFrameId = mDepthFrameId;
-  mRgbOptFrameId = mCloudFrameId;
   mDisparityFrameId = mDepthFrameId;
   mDisparityOptFrameId = mDepthOptFrameId;
   mConfidenceFrameId = mDepthFrameId;
@@ -969,8 +800,6 @@ void ZEDWrapperNodelet::readParameters()
 
   mNhNs.getParam("pub_frame_rate", mVideoDepthFreq);
   NODELET_INFO_STREAM(" * [DYN] pub_frame_rate\t\t-> " << mVideoDepthFreq << " Hz");
-  mNhNs.getParam("point_cloud_freq", mPointCloudFreq);
-  NODELET_INFO_STREAM(" * [DYN] point_cloud_freq\t-> " << mPointCloudFreq << " Hz");
   mNhNs.getParam("brightness", mCamBrightness);
   NODELET_INFO_STREAM(" * [DYN] brightness\t\t-> " << mCamBrightness);
   mNhNs.getParam("contrast", mCamContrast);
@@ -1407,200 +1236,6 @@ bool ZEDWrapperNodelet::on_reset_odometry(zed_interfaces::reset_odometry::Reques
   return true;
 }
 
-bool ZEDWrapperNodelet::start_3d_mapping()
-{
-  if (!mMappingEnabled)
-  {
-    return false;
-  }
-
-  NODELET_INFO_STREAM("*** Starting Spatial Mapping ***");
-
-  sl::SpatialMappingParameters params;
-  params.map_type = sl::SpatialMappingParameters::SPATIAL_MAP_TYPE::FUSED_POINT_CLOUD;
-  params.use_chunk_only = true;
-
-  sl::SpatialMappingParameters spMapPar;
-
-  float lRes = spMapPar.allowed_resolution.first;
-  float hRes = spMapPar.allowed_resolution.second;
-
-  if (mMappingRes < lRes)
-  {
-    NODELET_WARN_STREAM("'mapping/resolution' value ("
-                        << mMappingRes << " m) is lower than the allowed resolution values. Fixed automatically");
-    mMappingRes = lRes;
-  }
-  if (mMappingRes > hRes)
-  {
-    NODELET_WARN_STREAM("'mapping/resolution' value ("
-                        << mMappingRes << " m) is higher than the allowed resolution values. Fixed automatically");
-    mMappingRes = hRes;
-  }
-
-  params.resolution_meter = mMappingRes;
-
-  float lRng = spMapPar.allowed_range.first;
-  float hRng = spMapPar.allowed_range.second;
-
-  if (mMaxMappingRange < 0)
-  {
-    mMaxMappingRange = sl::SpatialMappingParameters::getRecommendedRange(mMappingRes, mZed);
-    NODELET_INFO_STREAM("Mapping: max range set to " << mMaxMappingRange << " m for a resolution of " << mMappingRes
-                                                     << " m");
-  }
-  else if (mMaxMappingRange < lRng)
-  {
-    NODELET_WARN_STREAM("'mapping/max_mapping_range_m' value ("
-                        << mMaxMappingRange << " m) is lower than the allowed resolution values. Fixed automatically");
-    mMaxMappingRange = lRng;
-  }
-  else if (mMaxMappingRange > hRng)
-  {
-    NODELET_WARN_STREAM("'mapping/max_mapping_range_m' value ("
-                        << mMaxMappingRange << " m) is higher than the allowed resolution values. Fixed automatically");
-    mMaxMappingRange = hRng;
-  }
-
-  params.range_meter = mMaxMappingRange;
-
-  sl::ERROR_CODE err = mZed.enableSpatialMapping(params);
-
-  if (err == sl::ERROR_CODE::SUCCESS)
-  {
-    if (mPubFusedCloud.getTopic().empty())
-    {
-      string pointcloud_fused_topic = "mapping/fused_cloud";
-      mPubFusedCloud = mNhNs.advertise<sensor_msgs::PointCloud2>(pointcloud_fused_topic, 1);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubFusedCloud.getTopic() << " @ " << mFusedPcPubFreq << " Hz");
-    }
-
-    mMappingRunning = true;
-
-    mFusedPcTimer =
-        mNhNs.createTimer(ros::Duration(1.0 / mFusedPcPubFreq), &ZEDWrapperNodelet::callback_pubFusedPointCloud, this);
-
-    NODELET_INFO_STREAM(" * Resolution: " << params.resolution_meter << " m");
-    NODELET_INFO_STREAM(" * Max Mapping Range: " << params.range_meter << " m");
-    NODELET_INFO_STREAM(" * Map point cloud publishing rate: " << mFusedPcPubFreq << " Hz");
-
-    return true;
-  }
-  else
-  {
-    mMappingRunning = false;
-    mFusedPcTimer.stop();
-
-    NODELET_WARN("Mapping not activated: %s", sl::toString(err).c_str());
-
-    return false;
-  }
-}
-
-void ZEDWrapperNodelet::stop_3d_mapping()
-{
-  mFusedPcTimer.stop();
-  mMappingRunning = false;
-  mMappingEnabled = false;
-  mZed.disableSpatialMapping();
-
-  NODELET_INFO("*** Spatial Mapping stopped ***");
-}
-
-bool ZEDWrapperNodelet::start_obj_detect()
-{
-  if (mZedRealCamModel != sl::MODEL::ZED2 && mZedRealCamModel != sl::MODEL::ZED2i)
-  {
-    NODELET_ERROR_STREAM("Object detection not started. OD is available only using a ZED2/ZED2i camera model");
-    return false;
-  }
-
-  if (!mObjDetEnabled)
-  {
-    return false;
-  }
-
-  if (!mCamera2BaseTransfValid || !mSensor2CameraTransfValid || !mSensor2BaseTransfValid)
-  {
-    NODELET_DEBUG("Tracking transforms not yet ready, OD starting postponed");
-    return false;
-  }
-
-  NODELET_INFO_STREAM("*** Starting Object Detection ***");
-
-  sl::ObjectDetectionParameters od_p;
-  od_p.enable_mask_output = false;
-  od_p.enable_tracking = mObjDetTracking;
-  od_p.image_sync = false;  // Asynchronous object detection
-  od_p.detection_model = mObjDetModel;
-  od_p.enable_body_fitting = mObjDetBodyFitting;
-  od_p.max_range = mObjDetMaxRange;
-
-  sl::ERROR_CODE objDetError = mZed.enableObjectDetection(od_p);
-
-  if (objDetError != sl::ERROR_CODE::SUCCESS)
-  {
-    NODELET_ERROR_STREAM("Object detection error: " << sl::toString(objDetError));
-
-    mObjDetRunning = false;
-    return false;
-  }
-
-  if (mPubObjDet.getTopic().empty())
-  {
-    string object_det_topic_root = "obj_det";
-    string object_det_topic = object_det_topic_root + "/objects";
-
-    mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
-  }
-
-  mObjDetFilter.clear();
-
-  if (mObjDetModel == sl::DETECTION_MODEL::MULTI_CLASS_BOX ||
-      mObjDetModel == sl::DETECTION_MODEL::MULTI_CLASS_BOX_ACCURATE)
-  {
-    if (mObjDetPeopleEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::PERSON);
-    }
-    if (mObjDetVehiclesEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::VEHICLE);
-    }
-    if (mObjDetBagsEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::BAG);
-    }
-    if (mObjDetAnimalsEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::ANIMAL);
-    }
-    if (mObjDetElectronicsEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::ELECTRONICS);
-    }
-    if (mObjDetFruitsEnable)
-    {
-      mObjDetFilter.push_back(sl::OBJECT_CLASS::FRUIT_VEGETABLE);
-    }
-  }
-
-  mObjDetRunning = true;
-  return false;
-}
-
-void ZEDWrapperNodelet::stop_obj_detect()
-{
-  if (mObjDetRunning)
-  {
-    NODELET_INFO_STREAM("*** Stopping Object Detection ***");
-    mObjDetRunning = false;
-    mObjDetEnabled = false;
-    mZed.disableObjectDetection();
-  }
-}
-
 void ZEDWrapperNodelet::start_pos_tracking()
 {
   NODELET_INFO_STREAM("*** Starting Positional Tracking ***");
@@ -1997,198 +1632,6 @@ void ZEDWrapperNodelet::publishDisparity(sl::Mat disparity, ros::Time t)
   mPubDisparity.publish(disparityMsg);
 }
 
-void ZEDWrapperNodelet::pointcloud_thread_func()
-{
-  std::unique_lock<std::mutex> lock(mPcMutex);
-
-  while (!mStopNode)
-  {
-    while (!mPcDataReady)
-    {  // loop to avoid spurious wakeups
-      if (mPcDataReadyCondVar.wait_for(lock, std::chrono::milliseconds(500)) == std::cv_status::timeout)
-      {
-        // Check thread stopping
-        if (mStopNode)
-        {
-          return;
-        }
-        else
-        {
-          continue;
-        }
-      }
-    }
-
-    // ----> Check publishing frequency
-    double pc_period_msec = 1000.0 / mPointCloudFreq;
-
-    static std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-
-    double elapsed_msec = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time).count();
-
-    if (elapsed_msec < pc_period_msec)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long int>(pc_period_msec - elapsed_msec)));
-    }
-    // <---- Check publishing frequency
-
-    last_time = std::chrono::steady_clock::now();
-    publishPointCloud();
-
-    mPcDataReady = false;
-  }
-
-  NODELET_DEBUG("Pointcloud thread finished");
-}
-
-void ZEDWrapperNodelet::publishPointCloud()
-{
-  sensor_msgs::PointCloud2Ptr pointcloudMsg = boost::make_shared<sensor_msgs::PointCloud2>();
-
-  // Publish freq calculation
-  static std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-
-  double elapsed_usec = std::chrono::duration_cast<std::chrono::microseconds>(now - last_time).count();
-  last_time = now;
-
-  mPcPeriodMean_usec->addValue(elapsed_usec);
-
-  // Initialize Point Cloud message
-  // https://github.com/ros/common_msgs/blob/jade-devel/sensor_msgs/include/sensor_msgs/point_cloud2_iterator.h
-
-  int ptsCount = mMatResolDepth.width * mMatResolDepth.height;
-
-  pointcloudMsg->header.stamp = mPointCloudTime;
-
-  if (pointcloudMsg->width != mMatResolDepth.width || pointcloudMsg->height != mMatResolDepth.height)
-  {
-    pointcloudMsg->header.frame_id = mPointCloudFrameId;  // Set the header values of the ROS message
-
-    pointcloudMsg->is_bigendian = false;
-    pointcloudMsg->is_dense = false;
-
-    pointcloudMsg->width = mMatResolDepth.width;
-    pointcloudMsg->height = mMatResolDepth.height;
-
-    sensor_msgs::PointCloud2Modifier modifier(*pointcloudMsg);
-    modifier.setPointCloud2Fields(4, "x", 1, sensor_msgs::PointField::FLOAT32, "y", 1, sensor_msgs::PointField::FLOAT32,
-                                  "z", 1, sensor_msgs::PointField::FLOAT32, "rgb", 1, sensor_msgs::PointField::FLOAT32);
-  }
-
-  // Data copy
-  sl::Vector4<float>* cpu_cloud = mCloud.getPtr<sl::float4>();
-  float* ptCloudPtr = (float*)(&pointcloudMsg->data[0]);
-
-  // We can do a direct memcpy since data organization is the same
-  memcpy(ptCloudPtr, (float*)cpu_cloud, 4 * ptsCount * sizeof(float));
-
-  // Pointcloud publishing
-  mPubCloud.publish(pointcloudMsg);
-}
-
-void ZEDWrapperNodelet::callback_pubFusedPointCloud(const ros::TimerEvent& e)
-{
-  sensor_msgs::PointCloud2Ptr pointcloudFusedMsg = boost::make_shared<sensor_msgs::PointCloud2>();
-
-  uint32_t fusedCloudSubnumber = mPubFusedCloud.getNumSubscribers();
-
-  if (fusedCloudSubnumber == 0)
-  {
-    return;
-  }
-
-  std::lock_guard<std::mutex> lock(mCloseZedMutex);
-
-  if (!mZed.isOpened())
-  {
-    return;
-  }
-
-  // pointcloudFusedMsg->header.stamp = t;
-  mZed.requestSpatialMapAsync();
-
-  while (mZed.getSpatialMapRequestStatusAsync() == sl::ERROR_CODE::FAILURE)
-  {
-    // Mesh is still generating
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-
-  sl::ERROR_CODE res = mZed.retrieveSpatialMapAsync(mFusedPC);
-
-  if (res != sl::ERROR_CODE::SUCCESS)
-  {
-    NODELET_WARN_STREAM("Fused point cloud not extracted: " << sl::toString(res).c_str());
-    return;
-  }
-
-  size_t ptsCount = mFusedPC.getNumberOfPoints();
-  bool resized = false;
-
-  if (pointcloudFusedMsg->width != ptsCount || pointcloudFusedMsg->height != 1)
-  {
-    // Initialize Point Cloud message
-    // https://github.com/ros/common_msgs/blob/jade-devel/sensor_msgs/include/sensor_msgs/point_cloud2_iterator.h
-    pointcloudFusedMsg->header.frame_id = mMapFrameId;  // Set the header values of the ROS message
-    pointcloudFusedMsg->is_bigendian = false;
-    pointcloudFusedMsg->is_dense = false;
-    pointcloudFusedMsg->width = ptsCount;
-    pointcloudFusedMsg->height = 1;
-
-    sensor_msgs::PointCloud2Modifier modifier(*pointcloudFusedMsg);
-    modifier.setPointCloud2Fields(4, "x", 1, sensor_msgs::PointField::FLOAT32, "y", 1, sensor_msgs::PointField::FLOAT32,
-                                  "z", 1, sensor_msgs::PointField::FLOAT32, "rgb", 1, sensor_msgs::PointField::FLOAT32);
-
-    resized = true;
-  }
-
-  std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-
-  // NODELET_INFO_STREAM("Chunks: " << mFusedPC.chunks.size());
-
-  int index = 0;
-  float* ptCloudPtr = (float*)(&pointcloudFusedMsg->data[0]);
-  int updated = 0;
-
-  for (int c = 0; c < mFusedPC.chunks.size(); c++)
-  {
-    if (mFusedPC.chunks[c].has_been_updated || resized)
-    {
-      updated++;
-
-      size_t chunkSize = mFusedPC.chunks[c].vertices.size();
-
-      if (chunkSize > 0)
-      {
-        float* cloud_pts = (float*)(mFusedPC.chunks[c].vertices.data());
-
-        memcpy(ptCloudPtr, cloud_pts, 4 * chunkSize * sizeof(float));
-
-        ptCloudPtr += 4 * chunkSize;
-
-        pointcloudFusedMsg->header.stamp = sl_tools::slTime2Ros(mFusedPC.chunks[c].timestamp);
-      }
-    }
-    else
-    {
-      index += mFusedPC.chunks[c].vertices.size();
-    }
-  }
-
-  std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
-
-  // NODELET_INFO_STREAM("Updated: " << updated);
-
-  // double elapsed_usec = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-
-  //        NODELET_INFO_STREAM("Data copy: " << elapsed_usec << " usec [" << ptsCount << "] - " << (static_cast<double>
-  //                        (ptsCount) / elapsed_usec) << " pts/usec");
-
-  // Pointcloud publishing
-  mPubFusedCloud.publish(pointcloudFusedMsg);
-}
-
 void ZEDWrapperNodelet::publishCamInfo(sensor_msgs::CameraInfoPtr camInfoMsg, ros::Publisher pubCamInfo, ros::Time t)
 {
   static int seq = 0;
@@ -2379,7 +1822,7 @@ void ZEDWrapperNodelet::updateDynamicReconfigure()
   config.sharpness = mCamSharpness;
   config.gamma = mCamGamma;
   config.whitebalance_temperature = mCamWB / 100;
-  config.point_cloud_freq = mPointCloudFreq;
+  // config.point_cloud_freq = mPointCloudFreq;
   config.pub_frame_rate = mVideoDepthFreq;
   mDynParMutex.unlock();
 
@@ -2431,25 +1874,6 @@ void ZEDWrapperNodelet::callback_dynamicReconf(zed_nodelets::ZedConfig& config, 
     case TEXTURE_CONF:
       mCamDepthTextureConf = config.depth_texture_conf;
       NODELET_INFO("Reconfigure texture confidence threshold: %d", mCamDepthTextureConf);
-      mDynParMutex.unlock();
-      // NODELET_DEBUG_STREAM( "dynamicReconfCallback MUTEX UNLOCK");
-      break;
-
-    case POINTCLOUD_FREQ:
-      if (config.point_cloud_freq > mCamFrameRate)
-      {
-        mPointCloudFreq = mCamFrameRate;
-        NODELET_WARN_STREAM("'point_cloud_freq' cannot be major than camera grabbing framerate. Set to "
-                            << mPointCloudFreq);
-
-        mUpdateDynParams = true;
-      }
-      else
-      {
-        mPointCloudFreq = config.point_cloud_freq;
-        NODELET_INFO("Reconfigure point cloud pub. frequency: %g", mPointCloudFreq);
-      }
-
       mDynParMutex.unlock();
       // NODELET_DEBUG_STREAM( "dynamicReconfCallback MUTEX UNLOCK");
       break;
@@ -2586,35 +2010,21 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
 {
   static sl::Timestamp lastZedTs = 0;  // Used to calculate stable publish frequency
 
-  uint32_t rgbSubnumber = mPubRgb.getNumSubscribers();
-  uint32_t rgbRawSubnumber = mPubRawRgb.getNumSubscribers();
   uint32_t leftSubnumber = mPubLeft.getNumSubscribers();
   uint32_t leftRawSubnumber = mPubRawLeft.getNumSubscribers();
   uint32_t rightSubnumber = mPubRight.getNumSubscribers();
   uint32_t rightRawSubnumber = mPubRawRight.getNumSubscribers();
-  uint32_t rgbGraySubnumber = mPubRgbGray.getNumSubscribers();
-  uint32_t rgbGrayRawSubnumber = mPubRawRgbGray.getNumSubscribers();
-  uint32_t leftGraySubnumber = mPubLeftGray.getNumSubscribers();
-  uint32_t leftGrayRawSubnumber = mPubRawLeftGray.getNumSubscribers();
-  uint32_t rightGraySubnumber = mPubRightGray.getNumSubscribers();
-  uint32_t rightGrayRawSubnumber = mPubRawRightGray.getNumSubscribers();
   uint32_t depthSubnumber = mPubDepth.getNumSubscribers();
   uint32_t disparitySubnumber = mPubDisparity.getNumSubscribers();
   uint32_t confMapSubnumber = mPubConfMap.getNumSubscribers();
-  uint32_t stereoSubNumber = mPubStereo.getNumSubscribers();
-  uint32_t stereoRawSubNumber = mPubRawStereo.getNumSubscribers();
 
-  uint32_t tot_sub = rgbSubnumber + rgbRawSubnumber + leftSubnumber + leftRawSubnumber + rightSubnumber +
-                     rightRawSubnumber + rgbGraySubnumber + rgbGrayRawSubnumber + leftGraySubnumber +
-                     leftGrayRawSubnumber + rightGraySubnumber + rightGrayRawSubnumber + depthSubnumber +
-                     disparitySubnumber + confMapSubnumber + stereoSubNumber + stereoRawSubNumber;
+  uint32_t tot_sub = leftSubnumber + leftRawSubnumber + rightSubnumber + rightRawSubnumber +
+                     depthSubnumber + disparitySubnumber + confMapSubnumber;
 
   bool retrieved = false;
 
   sl::Mat mat_left, mat_left_raw;
   sl::Mat mat_right, mat_right_raw;
-  sl::Mat mat_left_gray, mat_left_raw_gray;
-  sl::Mat mat_right_gray, mat_right_raw_gray;
   sl::Mat mat_depth, mat_disp, mat_conf;
 
   sl::Timestamp ts_rgb = 0;    // used to check RGB/Depth sync
@@ -2624,54 +2034,30 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
   mCamDataMutex.lock();
 
   // ----> Retrieve all required image data
-  if (rgbSubnumber + leftSubnumber + stereoSubNumber > 0)
+  if (leftSubnumber > 0)
   {
     mZed.retrieveImage(mat_left, sl::VIEW::LEFT, sl::MEM::CPU, mMatResolVideo);
     retrieved = true;
     ts_rgb = mat_left.timestamp;
     grab_ts = mat_left.timestamp;
   }
-  if (rgbRawSubnumber + leftRawSubnumber + stereoRawSubNumber > 0)
+  if (leftRawSubnumber > 0)
   {
     mZed.retrieveImage(mat_left_raw, sl::VIEW::LEFT_UNRECTIFIED, sl::MEM::CPU, mMatResolVideo);
     retrieved = true;
     grab_ts = mat_left_raw.timestamp;
   }
-  if (rightSubnumber + stereoSubNumber > 0)
+  if (rightSubnumber > 0)
   {
     mZed.retrieveImage(mat_right, sl::VIEW::RIGHT, sl::MEM::CPU, mMatResolVideo);
     retrieved = true;
     grab_ts = mat_right.timestamp;
   }
-  if (rightRawSubnumber + stereoRawSubNumber > 0)
+  if (rightRawSubnumber > 0)
   {
     mZed.retrieveImage(mat_right_raw, sl::VIEW::RIGHT_UNRECTIFIED, sl::MEM::CPU, mMatResolVideo);
     retrieved = true;
     grab_ts = mat_right_raw.timestamp;
-  }
-  if (rgbGraySubnumber + leftGraySubnumber > 0)
-  {
-    mZed.retrieveImage(mat_left_gray, sl::VIEW::LEFT_GRAY, sl::MEM::CPU, mMatResolVideo);
-    retrieved = true;
-    grab_ts = mat_left_gray.timestamp;
-  }
-  if (rgbGrayRawSubnumber + leftGrayRawSubnumber > 0)
-  {
-    mZed.retrieveImage(mat_left_raw_gray, sl::VIEW::LEFT_UNRECTIFIED_GRAY, sl::MEM::CPU, mMatResolVideo);
-    retrieved = true;
-    grab_ts = mat_left_raw_gray.timestamp;
-  }
-  if (rightGraySubnumber > 0)
-  {
-    mZed.retrieveImage(mat_right_gray, sl::VIEW::RIGHT_GRAY, sl::MEM::CPU, mMatResolVideo);
-    retrieved = true;
-    grab_ts = mat_right_gray.timestamp;
-  }
-  if (rightGrayRawSubnumber > 0)
-  {
-    mZed.retrieveImage(mat_right_raw_gray, sl::VIEW::RIGHT_UNRECTIFIED_GRAY, sl::MEM::CPU, mMatResolVideo);
-    retrieved = true;
-    grab_ts = mat_right_raw_gray.timestamp;
   }
   if (depthSubnumber > 0)
   {
@@ -2781,47 +2167,12 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
     sensor_msgs::ImagePtr leftImgMsg = boost::make_shared<sensor_msgs::Image>();
     publishImage(leftImgMsg, mat_left, mPubLeft, mLeftCamInfoMsg, mLeftCamOptFrameId, stamp);
   }
-  if (rgbSubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rgbImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rgbImgMsg, mat_left, mPubRgb, mRgbCamInfoMsg, mDepthOptFrameId, stamp);
-  }
-
-  // Publish the left = rgb GRAY image if someone has subscribed to
-  if (leftGraySubnumber > 0)
-  {
-    sensor_msgs::ImagePtr leftGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(leftGrayImgMsg, mat_left_gray, mPubLeftGray, mLeftCamInfoMsg, mLeftCamOptFrameId, stamp);
-  }
-  if (rgbGraySubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rgbGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rgbGrayImgMsg, mat_left_gray, mPubRgbGray, mRgbCamInfoMsg, mDepthOptFrameId, stamp);
-  }
 
   // Publish the left_raw = rgb_raw image if someone has subscribed to
   if (leftRawSubnumber > 0)
   {
     sensor_msgs::ImagePtr rawLeftImgMsg = boost::make_shared<sensor_msgs::Image>();
     publishImage(rawLeftImgMsg, mat_left_raw, mPubRawLeft, mLeftCamInfoRawMsg, mLeftCamOptFrameId, stamp);
-  }
-  if (rgbRawSubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rawRgbImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rawRgbImgMsg, mat_left_raw, mPubRawRgb, mRgbCamInfoRawMsg, mDepthOptFrameId, stamp);
-  }
-
-  // Publish the left_raw == rgb_raw GRAY image if someone has subscribed to
-  if (leftGrayRawSubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rawLeftGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-
-    publishImage(rawLeftGrayImgMsg, mat_left_raw_gray, mPubRawLeftGray, mLeftCamInfoRawMsg, mLeftCamOptFrameId, stamp);
-  }
-  if (rgbGrayRawSubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rawRgbGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rawRgbGrayImgMsg, mat_left_raw_gray, mPubRawRgbGray, mRgbCamInfoRawMsg, mDepthOptFrameId, stamp);
   }
 
   // Publish the right image if someone has subscribed to
@@ -2831,42 +2182,11 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
     publishImage(rightImgMsg, mat_right, mPubRight, mRightCamInfoMsg, mRightCamOptFrameId, stamp);
   }
 
-  // Publish the right image GRAY if someone has subscribed to
-  if (rightGraySubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rightGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rightGrayImgMsg, mat_right_gray, mPubRightGray, mRightCamInfoMsg, mRightCamOptFrameId, stamp);
-  }
-
   // Publish the right raw image if someone has subscribed to
   if (rightRawSubnumber > 0)
   {
     sensor_msgs::ImagePtr rawRightImgMsg = boost::make_shared<sensor_msgs::Image>();
     publishImage(rawRightImgMsg, mat_right_raw, mPubRawRight, mRightCamInfoRawMsg, mRightCamOptFrameId, stamp);
-  }
-
-  // Publish the right raw image GRAY if someone has subscribed to
-  if (rightGrayRawSubnumber > 0)
-  {
-    sensor_msgs::ImagePtr rawRightGrayImgMsg = boost::make_shared<sensor_msgs::Image>();
-    publishImage(rawRightGrayImgMsg, mat_right_raw_gray, mPubRawRightGray, mRightCamInfoRawMsg, mRightCamOptFrameId,
-                 stamp);
-  }
-
-  // Stereo couple side-by-side
-  if (stereoSubNumber > 0)
-  {
-    sensor_msgs::ImagePtr stereoImgMsg = boost::make_shared<sensor_msgs::Image>();
-    sl_tools::imagesToROSmsg(stereoImgMsg, mat_left, mat_right, mCameraFrameId, stamp);
-    mPubStereo.publish(stereoImgMsg);
-  }
-
-  // Stereo RAW couple side-by-side
-  if (stereoRawSubNumber > 0)
-  {
-    sensor_msgs::ImagePtr rawStereoImgMsg = boost::make_shared<sensor_msgs::Image>();
-    sl_tools::imagesToROSmsg(rawStereoImgMsg, mat_left_raw, mat_right_raw, mCameraFrameId, stamp);
-    mPubRawStereo.publish(rawStereoImgMsg);
   }
 
   // Publish the depth image if someone has subscribed to
@@ -3445,8 +2765,6 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   mElabPeriodMean_sec.reset(new sl_tools::CSmartMean(mCamFrameRate));
   mGrabPeriodMean_usec.reset(new sl_tools::CSmartMean(mCamFrameRate));
   mVideoDepthPeriodMean_sec.reset(new sl_tools::CSmartMean(mCamFrameRate));
-  mPcPeriodMean_usec.reset(new sl_tools::CSmartMean(mCamFrameRate));
-  mObjDetPeriodMean_msec.reset(new sl_tools::CSmartMean(mCamFrameRate));
 
   // Timestamp initialization
   mFrameTimestamp = getTimestamp();
@@ -3457,7 +2775,6 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   mPrevFrameTimestamp = mFrameTimestamp;
 
   mPosTrackingActivated = false;
-  mMappingRunning = false;
   mRecording = false;
 
   // Get the parameters of the ZED images
@@ -3485,9 +2802,6 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
   // the reference camera is the Left one (next to the ZED logo)
 
-  mRgbCamInfoMsg = mLeftCamInfoMsg;
-  mRgbCamInfoRawMsg = mLeftCamInfoRawMsg;
-
   sl::RuntimeParameters runParams;
   runParams.sensing_mode = static_cast<sl::SENSING_MODE>(mCamSensingMode);
 
@@ -3497,43 +2811,22 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   while (mNhNs.ok())
   {
     // Check for subscribers
-    uint32_t rgbSubnumber = mPubRgb.getNumSubscribers();
-    uint32_t rgbRawSubnumber = mPubRawRgb.getNumSubscribers();
     uint32_t leftSubnumber = mPubLeft.getNumSubscribers();
     uint32_t leftRawSubnumber = mPubRawLeft.getNumSubscribers();
     uint32_t rightSubnumber = mPubRight.getNumSubscribers();
     uint32_t rightRawSubnumber = mPubRawRight.getNumSubscribers();
-    uint32_t rgbGraySubnumber = mPubRgbGray.getNumSubscribers();
-    uint32_t rgbGrayRawSubnumber = mPubRawRgbGray.getNumSubscribers();
-    uint32_t leftGraySubnumber = mPubLeftGray.getNumSubscribers();
-    uint32_t leftGrayRawSubnumber = mPubRawLeftGray.getNumSubscribers();
-    uint32_t rightGraySubnumber = mPubRightGray.getNumSubscribers();
-    uint32_t rightGrayRawSubnumber = mPubRawRightGray.getNumSubscribers();
     uint32_t depthSubnumber = mPubDepth.getNumSubscribers();
     uint32_t disparitySubnumber = mPubDisparity.getNumSubscribers();
-    uint32_t cloudSubnumber = mPubCloud.getNumSubscribers();
-    uint32_t fusedCloudSubnumber = mPubFusedCloud.getNumSubscribers();
     uint32_t poseSubnumber = mPubPose.getNumSubscribers();
     uint32_t poseCovSubnumber = mPubPoseCov.getNumSubscribers();
     uint32_t odomSubnumber = mPubOdom.getNumSubscribers();
     uint32_t confMapSubnumber = mPubConfMap.getNumSubscribers();
     uint32_t pathSubNumber = mPubMapPath.getNumSubscribers() + mPubOdomPath.getNumSubscribers();
-    uint32_t stereoSubNumber = mPubStereo.getNumSubscribers();
-    uint32_t stereoRawSubNumber = mPubRawStereo.getNumSubscribers();
-
-    uint32_t objDetSubnumber = 0;
-    if (mObjDetEnabled && mObjDetRunning)
-    {
-      objDetSubnumber = mPubObjDet.getNumSubscribers();
-    }
 
     mGrabActive =
-        mRecording || mStreaming || mMappingEnabled || mObjDetEnabled || mPosTrackingEnabled || mPosTrackingActivated ||
-        ((rgbSubnumber + rgbRawSubnumber + leftSubnumber + leftRawSubnumber + rightSubnumber + rightRawSubnumber +
-          rgbGraySubnumber + rgbGrayRawSubnumber + leftGraySubnumber + leftGrayRawSubnumber + rightGraySubnumber +
-          rightGrayRawSubnumber + depthSubnumber + disparitySubnumber + cloudSubnumber + poseSubnumber +
-          poseCovSubnumber + odomSubnumber + confMapSubnumber /*+ imuSubnumber + imuRawsubnumber*/ + pathSubNumber +
-          stereoSubNumber + stereoRawSubNumber + objDetSubnumber) > 0);
+        mRecording || mStreaming || mPosTrackingEnabled || mPosTrackingActivated ||
+        ((leftSubnumber + leftRawSubnumber + rightSubnumber + rightRawSubnumber +
+          poseCovSubnumber + odomSubnumber + confMapSubnumber /*+ imuSubnumber + imuRawsubnumber*/ + pathSubNumber) > 0);
 
     // Run the loop only if there is some subscribers or SVO is active
     if (mGrabActive)
@@ -3541,7 +2834,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       std::lock_guard<std::mutex> lock(mPosTrkMutex);
 
       // Note: ones tracking is started it is never stopped anymore to not lose tracking information
-      bool computeTracking = (mPosTrackingEnabled || mPosTrackingActivated || mMappingEnabled || mObjDetEnabled || (mComputeDepth & mDepthStabilization) ||
+      bool computeTracking = (mPosTrackingEnabled || mPosTrackingActivated || (mComputeDepth & mDepthStabilization) ||
                               poseSubnumber > 0 || poseCovSubnumber > 0 || odomSubnumber > 0 || pathSubNumber > 0);
 
       // Start the tracking?
@@ -3550,26 +2843,10 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         start_pos_tracking();
       }
 
-      // Start the mapping?
-      mMappingMutex.lock();
-      if (mMappingEnabled && !mMappingRunning)
-      {
-        start_3d_mapping();
-      }
-      mMappingMutex.unlock();
-
-      // Start the object detection?
-      mObjDetMutex.lock();
-      if (mObjDetEnabled && !mObjDetRunning)
-      {
-        start_obj_detect();
-      }
-      mObjDetMutex.unlock();
-
       // Detect if one of the subscriber need to have the depth information
       mComputeDepth = mDepthMode != sl::DEPTH_MODE::NONE &&
-                      (computeTracking || ((depthSubnumber + disparitySubnumber + cloudSubnumber + fusedCloudSubnumber + poseSubnumber +
-                        poseCovSubnumber + odomSubnumber + confMapSubnumber + objDetSubnumber) > 0));
+                      (computeTracking || ((depthSubnumber + disparitySubnumber + poseSubnumber +
+                       poseCovSubnumber + odomSubnumber + confMapSubnumber) > 0));
 
       if (mComputeDepth)
       {
@@ -3587,7 +2864,6 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       }
 
       mCamDataMutex.lock();
-      mRgbDepthDataRetrieved = false;
       mGrabStatus = mZed.grab(runParams);
       mCamDataMutex.unlock();
 
@@ -3813,39 +3089,6 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         updateDynamicReconfigure();
       }
       // <---- Camera Settings
-
-      // Publish the point cloud if someone has subscribed to
-      if (cloudSubnumber > 0)
-      {
-        // Run the point cloud conversion asynchronously to avoid slowing down
-        // all the program
-        // Retrieve raw pointCloud data if latest Pointcloud is ready
-        std::unique_lock<std::mutex> lock(mPcMutex, std::defer_lock);
-
-        if (lock.try_lock())
-        {
-          mZed.retrieveMeasure(mCloud, sl::MEASURE::XYZBGRA, sl::MEM::CPU, mMatResolDepth);
-
-          mPointCloudFrameId = mDepthFrameId;
-          mPointCloudTime = stamp;
-
-          // Signal Pointcloud thread that a new pointcloud is ready
-          mPcDataReadyCondVar.notify_one();
-          mPcDataReady = true;
-          mPcPublishing = true;
-        }
-      }
-      else
-      {
-        mPcPublishing = false;
-      }
-
-      mObjDetMutex.lock();
-      if (mObjDetRunning && objDetSubnumber > 0)
-      {
-        processDetectedObjects(stamp);
-      }
-      mObjDetMutex.unlock();
 
       // Publish the odometry if someone has subscribed to
       if (computeTracking)
@@ -4236,17 +3479,6 @@ void ZEDWrapperNodelet::callback_updateDiagnostic(diagnostic_updater::Diagnostic
       {
         stat.add("Depth status", "ACTIVE");
 
-        if (mPcPublishing)
-        {
-          double freq = 1000000. / mPcPeriodMean_usec->getMean();
-          double freq_perc = 100. * freq / mPointCloudFreq;
-          stat.addf("Point Cloud", "Mean Frequency: %.1f Hz (%.1f%%)", freq, freq_perc);
-        }
-        else
-        {
-          stat.add("Point Cloud", "Topic not subscribed");
-        }
-
         if (mFloorAlignment)
         {
           if (mInitOdomWithPose)
@@ -4266,17 +3498,6 @@ void ZEDWrapperNodelet::callback_updateDiagnostic(diagnostic_updater::Diagnostic
         else
         {
           stat.add("Pos. Tracking status", "INACTIVE");
-        }
-
-        if (mObjDetRunning)
-        {
-          double freq = 1000. / mObjDetPeriodMean_msec->getMean();
-          double freq_perc = 100. * freq / mCamFrameRate;
-          stat.addf("Object detection", "Mean Frequency: %.3f Hz  (%.1f%%)", freq, freq_perc);
-        }
-        else
-        {
-          stat.add("Object Detection", "INACTIVE");
         }
       }
       else
@@ -4550,255 +3771,6 @@ bool ZEDWrapperNodelet::on_toggle_led(zed_interfaces::toggle_led::Request& req,
   mZed.setCameraSettings(sl::VIDEO_SETTINGS::LED_STATUS, new_status);
 
   return (new_status == 1);
-}
-
-bool ZEDWrapperNodelet::on_start_3d_mapping(zed_interfaces::start_3d_mapping::Request& req,
-                                            zed_interfaces::start_3d_mapping::Response& res)
-{
-  if (mMappingEnabled && mMappingRunning)
-  {
-    NODELET_WARN_STREAM("Spatial mapping was just running");
-
-    res.done = false;
-    return res.done;
-  }
-
-  mMappingRunning = false;
-
-  mMappingRes = req.resolution;
-  mMaxMappingRange = req.max_mapping_range;
-  mFusedPcPubFreq = req.fused_pointcloud_freq;
-
-  NODELET_DEBUG_STREAM(" * Received mapping resolution\t\t-> " << mMappingRes << " m");
-  NODELET_DEBUG_STREAM(" * Received mapping max range\t-> " << mMaxMappingRange << " m");
-  NODELET_DEBUG_STREAM(" * Received fused point cloud freq:\t-> " << mFusedPcPubFreq << " Hz");
-
-  mMappingEnabled = true;
-  res.done = true;
-
-  return res.done;
-}
-
-bool ZEDWrapperNodelet::on_stop_3d_mapping(zed_interfaces::stop_3d_mapping::Request& req,
-                                           zed_interfaces::stop_3d_mapping::Response& res)
-{
-  if (mMappingEnabled)
-  {
-    mPubFusedCloud.shutdown();
-    mMappingMutex.lock();
-    stop_3d_mapping();
-    mMappingMutex.unlock();
-
-    res.done = true;
-  }
-  else
-  {
-    res.done = false;
-  }
-
-  return res.done;
-}
-
-bool ZEDWrapperNodelet::on_start_object_detection(zed_interfaces::start_object_detection::Request& req,
-                                                  zed_interfaces::start_object_detection::Response& res)
-{
-  NODELET_INFO("Called 'start_object_detection' service");
-
-  if (mZedRealCamModel != sl::MODEL::ZED2 && mZedRealCamModel != sl::MODEL::ZED2i)
-  {
-    mObjDetEnabled = false;
-    mObjDetRunning = false;
-
-    NODELET_ERROR_STREAM("Object detection not started. OD is available only using a ZED2/ZED2i camera model");
-    res.done = false;
-    return res.done;
-  }
-
-  if (mObjDetEnabled && mObjDetRunning)
-  {
-    NODELET_WARN_STREAM("Object Detection was just running");
-
-    res.done = false;
-    return res.done;
-  }
-
-  mObjDetRunning = false;
-
-  mObjDetConfidence = req.confidence;
-  mObjDetTracking = req.tracking;
-  if (req.model < 0 || req.model >= static_cast<int>(sl::DETECTION_MODEL::LAST))
-  {
-    NODELET_ERROR_STREAM("Object Detection model not valid.");
-    res.done = false;
-    return res.done;
-  }
-  mObjDetModel = static_cast<sl::DETECTION_MODEL>(req.model);
-
-  mObjDetMaxRange = req.max_range;
-  if (mObjDetMaxRange > mCamMaxDepth)
-  {
-    NODELET_WARN("Detection max range cannot be major than depth max range. Automatically fixed.");
-    mObjDetMaxRange = mCamMaxDepth;
-  }
-  NODELET_INFO_STREAM(" * Detection max range\t\t-> " << mObjDetMaxRange);
-
-  NODELET_INFO_STREAM(" * Object min. confidence\t-> " << mObjDetConfidence);
-  NODELET_INFO_STREAM(" * Object tracking\t\t-> " << (mObjDetTracking ? "ENABLED" : "DISABLED"));
-  NODELET_INFO_STREAM(" * Detection model\t\t-> " << sl::toString(mObjDetModel));
-
-  if (mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_FAST || mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_ACCURATE)
-  {
-    mObjDetBodyFitting = req.sk_body_fitting;
-    NODELET_INFO_STREAM(" * Body fitting\t\t\t-> " << (mObjDetBodyFitting ? "ENABLED" : "DISABLED"));
-  }
-  else
-  {
-    mObjDetPeopleEnable = req.mc_people;
-    NODELET_INFO_STREAM(" * Detect people\t\t-> " << (mObjDetPeopleEnable ? "ENABLED" : "DISABLED"));
-    mObjDetVehiclesEnable = req.mc_vehicles;
-    NODELET_INFO_STREAM(" * Detect vehicles\t\t-> " << (mObjDetVehiclesEnable ? "ENABLED" : "DISABLED"));
-    mObjDetBagsEnable = req.mc_bag;
-    NODELET_INFO_STREAM(" * Detect bags\t\t\t-> " << (mObjDetBagsEnable ? "ENABLED" : "DISABLED"));
-    mObjDetAnimalsEnable = req.mc_animal;
-    NODELET_INFO_STREAM(" * Detect animals\t\t-> " << (mObjDetAnimalsEnable ? "ENABLED" : "DISABLED"));
-    mObjDetElectronicsEnable = req.mc_electronics;
-    NODELET_INFO_STREAM(" * Detect electronics\t\t-> " << (mObjDetElectronicsEnable ? "ENABLED" : "DISABLED"));
-    mObjDetFruitsEnable = req.mc_fruit_vegetable;
-    NODELET_INFO_STREAM(" * Detect fruit and vegetables\t-> " << (mObjDetFruitsEnable ? "ENABLED" : "DISABLED"));
-  }
-
-  mObjDetRunning = false;
-  mObjDetEnabled = true;
-  res.done = true;
-
-  return res.done;
-}
-
-/*! \brief Service callback to stop_object_detection service
- */
-bool ZEDWrapperNodelet::on_stop_object_detection(zed_interfaces::stop_object_detection::Request& req,
-                                                 zed_interfaces::stop_object_detection::Response& res)
-{
-  if (mObjDetEnabled)
-  {
-    mObjDetMutex.lock();
-    stop_obj_detect();
-    mObjDetMutex.unlock();
-
-    res.done = true;
-  }
-  else
-  {
-    res.done = false;
-  }
-
-  return res.done;
-}
-
-void ZEDWrapperNodelet::processDetectedObjects(ros::Time t)
-{
-  static std::chrono::steady_clock::time_point old_time = std::chrono::steady_clock::now();
-
-  sl::ObjectDetectionRuntimeParameters objectTracker_parameters_rt;
-  objectTracker_parameters_rt.detection_confidence_threshold = mObjDetConfidence;
-  objectTracker_parameters_rt.object_class_filter = mObjDetFilter;
-
-  sl::Objects objects;
-
-  sl::ERROR_CODE objDetRes = mZed.retrieveObjects(objects, objectTracker_parameters_rt);
-
-  if (objDetRes != sl::ERROR_CODE::SUCCESS)
-  {
-    NODELET_WARN_STREAM("Object Detection error: " << sl::toString(objDetRes));
-    return;
-  }
-
-  if (!objects.is_new)
-  {
-    return;
-  }
-
-  // ----> Diagnostic information update
-  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-  double elapsed_msec = std::chrono::duration_cast<std::chrono::milliseconds>(now - old_time).count();
-  mObjDetPeriodMean_msec->addValue(elapsed_msec);
-  old_time = now;
-  // <---- Diagnostic information update
-
-  NODELET_DEBUG_STREAM("Detected " << objects.object_list.size() << " objects");
-
-  size_t objCount = objects.object_list.size();
-
-  zed_interfaces::ObjectsStampedPtr objMsg = boost::make_shared<zed_interfaces::ObjectsStamped>();
-  objMsg->header.stamp = t;
-  objMsg->header.frame_id = mLeftCamFrameId;
-
-  objMsg->objects.resize(objCount);
-
-  size_t idx = 0;
-  for (auto data : objects.object_list)
-  {
-    objMsg->objects[idx].label = sl::toString(data.label).c_str();
-    objMsg->objects[idx].sublabel = sl::toString(data.sublabel).c_str();
-    objMsg->objects[idx].label_id = data.id;
-    objMsg->objects[idx].confidence = data.confidence;
-
-    memcpy(&(objMsg->objects[idx].position[0]), &(data.position[0]), 3 * sizeof(float));
-    memcpy(&(objMsg->objects[idx].position_covariance[0]), &(data.position_covariance[0]), 6 * sizeof(float));
-    memcpy(&(objMsg->objects[idx].velocity[0]), &(data.velocity[0]), 3 * sizeof(float));
-
-    objMsg->objects[idx].tracking_available = mObjDetTracking;
-    objMsg->objects[idx].tracking_state = static_cast<int8_t>(data.tracking_state);
-    //NODELET_INFO_STREAM( "[" << idx << "] Tracking: " << sl::toString(static_cast<sl::OBJECT_TRACKING_STATE>(data.tracking_state)));
-    objMsg->objects[idx].action_state = static_cast<int8_t>(data.action_state);
-
-    if (data.bounding_box_2d.size() == 4)
-    {
-      memcpy(&(objMsg->objects[idx].bounding_box_2d.corners[0]), &(data.bounding_box_2d[0]), 8 * sizeof(unsigned int));
-    }
-    if (data.bounding_box.size() == 8)
-    {
-      memcpy(&(objMsg->objects[idx].bounding_box_3d.corners[0]), &(data.bounding_box[0]), 24 * sizeof(float));
-    }
-
-    memcpy(&(objMsg->objects[idx].dimensions_3d[0]), &(data.dimensions[0]), 3 * sizeof(float));
-
-    if (mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_ACCURATE ||
-        mObjDetModel == sl::DETECTION_MODEL::HUMAN_BODY_FAST)
-    {
-      objMsg->objects[idx].skeleton_available = true;
-
-      if (data.head_bounding_box_2d.size() == 4)
-      {
-        memcpy(&(objMsg->objects[idx].head_bounding_box_2d.corners[0]), &(data.head_bounding_box_2d[0]),
-               8 * sizeof(unsigned int));
-      }
-      if (data.head_bounding_box.size() == 8)
-      {
-        memcpy(&(objMsg->objects[idx].head_bounding_box_3d.corners[0]), &(data.head_bounding_box[0]),
-               24 * sizeof(float));
-      }
-      memcpy(&(objMsg->objects[idx].head_position[0]), &(data.head_position[0]), 3 * sizeof(float));
-
-      if (data.keypoint_2d.size() == 18)
-      {
-        memcpy(&(objMsg->objects[idx].skeleton_2d.keypoints[0]), &(data.keypoint_2d[0]), 36 * sizeof(float));
-      }
-      if (data.keypoint_2d.size() == 18)
-      {
-        memcpy(&(objMsg->objects[idx].skeleton_3d.keypoints[0]), &(data.keypoint[0]), 54 * sizeof(float));
-      }
-    }
-    else
-    {
-      objMsg->objects[idx].skeleton_available = false;
-    }
-
-    // at the end of the loop
-    idx++;
-  }
-
-  mPubObjDet.publish(objMsg);
 }
 
 }  // namespace zed_nodelets
