@@ -401,52 +401,27 @@ void ZEDWrapperNodelet::onInit()
   image_transport::ImageTransport it_zed(mNhNs);
 
   mPubLeft = it_zed.advertiseCamera(left_topic, 1);  // left
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubLeft.getInfoTopic());
   mPubRawLeft = it_zed.advertiseCamera(left_raw_topic, 1);  // left raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeft.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawLeft.getInfoTopic());
   mPubRight = it_zed.advertiseCamera(right_topic, 1);  // right
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRight.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRight.getInfoTopic());
   mPubRawRight = it_zed.advertiseCamera(right_raw_topic, 1);  // right raw
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubRawRight.getInfoTopic());
-
   mPubDepth = it_zed.advertiseCamera(depth_topic_root, 1);  // depth
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getTopic());
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDepth.getInfoTopic());
 
   if (mUseSimTime)
   {
     mPubSimClock = mNhNs.advertise<rosgraph_msgs::Clock>("/clock", 2);
   }
 
-  // Confidence Map publisher
   mPubConfMap = mNhNs.advertise<sensor_msgs::Image>(conf_map_topic, 1);  // confidence map
-  NODELET_INFO_STREAM("Advertised on topic " << mPubConfMap.getTopic());
-
-  // Disparity publisher
   mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>(disparityTopic, static_cast<int>(mVideoDepthFreq));
-  NODELET_INFO_STREAM("Advertised on topic " << mPubDisparity.getTopic());
-
-  // Odometry and Pose publisher
   mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>(poseTopic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubPose.getTopic());
-
   mPubPoseCov = mNhNs.advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_cov_topic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubPoseCov.getTopic());
-
   mPubOdom = mNhNs.advertise<nav_msgs::Odometry>(odometryTopic, 1);
-  NODELET_INFO_STREAM("Advertised on topic " << mPubOdom.getTopic());
 
   // Camera Path
   if (mPathPubRate > 0)
   {
     mPubOdomPath = mNhNs.advertise<nav_msgs::Path>(odom_path_topic, 1, true);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubOdomPath.getTopic());
     mPubMapPath = mNhNs.advertise<nav_msgs::Path>(map_path_topic, 1, true);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubMapPath.getTopic());
 
     mPathTimer = mNhNs.createTimer(ros::Duration(1.0 / mPathPubRate), &ZEDWrapperNodelet::callback_pubPath, this);
 
@@ -469,27 +444,20 @@ void ZEDWrapperNodelet::onInit()
   {
     // IMU Publishers
     mPubImu = mNhNs.advertise<sensor_msgs::Imu>(imu_topic, 1 /*static_cast<int>(mSensPubRate)*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImu.getTopic());
     mPubImuRaw = mNhNs.advertise<sensor_msgs::Imu>(imu_topic_raw, 1 /*static_cast<int>(mSensPubRate)*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImuRaw.getTopic());
     mPubImuMag = mNhNs.advertise<sensor_msgs::MagneticField>(imu_mag_topic, 1 /*MAG_FREQ*/);
-    NODELET_INFO_STREAM("Advertised on topic " << mPubImuMag.getTopic());
 
     if (mZedRealCamModel == sl::MODEL::ZED2 || mZedRealCamModel == sl::MODEL::ZED2i)
     {
       // IMU temperature sensor
       mPubImuTemp = mNhNs.advertise<sensor_msgs::Temperature>(imu_temp_topic, 1 /*static_cast<int>(mSensPubRate)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubImuTemp.getTopic());
 
       // Atmospheric pressure
       mPubPressure = mNhNs.advertise<sensor_msgs::FluidPressure>(pressure_topic, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubPressure.getTopic());
 
       // CMOS sensor temperatures
       mPubTempL = mNhNs.advertise<sensor_msgs::Temperature>(temp_topic_left, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubTempL.getTopic());
       mPubTempR = mNhNs.advertise<sensor_msgs::Temperature>(temp_topic_right, 1 /*static_cast<int>(BARO_FREQ)*/);
-      NODELET_INFO_STREAM("Advertised on topic " << mPubTempR.getTopic());
     }
 
     // Publish camera imu transform in a latched topic
@@ -516,8 +484,6 @@ void ZEDWrapperNodelet::onInit()
       NODELET_DEBUG("Camera-IMU Translation: \n %g %g %g", sl_tr.x, sl_tr.y, sl_tr.z);
 
       mPubCamImuTransf.publish(mCameraImuTransfMgs);
-
-      NODELET_INFO_STREAM("Advertised on topic " << mPubCamImuTransf.getTopic() << " [LATCHED]");
     }
 
     if (!mSvoMode && !mSensTimestampSync)
