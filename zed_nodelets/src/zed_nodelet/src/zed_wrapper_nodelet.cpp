@@ -538,12 +538,10 @@ void ZEDWrapperNodelet::onInit()
       mNhNs.createTimer(ros::Duration(1.0 / mVideoDepthFreq), &ZEDWrapperNodelet::callback_pubVideoDepth, this);
 }
 
-void ZEDWrapperNodelet::readParameters()
+void ZEDWrapperNodelet::setupGeneral()
 {
   NODELET_INFO_STREAM("*** GENERAL PARAMETERS ***");
 
-  // ----> General
-  // Get parameters from param files
   mNhNs.getParam("general/camera_name", mCameraName);
   NODELET_INFO_STREAM(" * Camera Name\t\t\t-> " << mCameraName.c_str());
   int resol;
@@ -601,22 +599,24 @@ void ZEDWrapperNodelet::readParameters()
   {
     NODELET_ERROR_STREAM("Camera model not valid: " << camera_model);
   }
-  // <---- General
+}
 
+void ZEDWrapperNodelet::setupVideo()
+{
   NODELET_INFO_STREAM("*** VIDEO PARAMETERS ***");
 
-  // ----> Video
   mNhNs.getParam("video/img_downsample_factor", mCamImageResizeFactor);
   NODELET_INFO_STREAM(" * Image resample factor\t-> " << mCamImageResizeFactor);
 
   mNhNs.getParam("video/extrinsic_in_camera_frame", mUseOldExtrinsic);
   NODELET_INFO_STREAM(" * Extrinsic param. frame\t-> "
                       << (mUseOldExtrinsic ? "X RIGHT - Y DOWN - Z FWD" : "X FWD - Y LEFT - Z UP"));
-  // <---- Video
+}
 
+void ZEDWrapperNodelet::setupDepth()
+{
   NODELET_INFO_STREAM("*** DEPTH PARAMETERS ***");
 
-  // -----> Depth
   int depth_mode;
   mNhNs.getParam("depth/quality", depth_mode);
   mDepthMode = static_cast<sl::DEPTH_MODE>(depth_mode);
@@ -635,11 +635,12 @@ void ZEDWrapperNodelet::readParameters()
   NODELET_INFO_STREAM(" * Maximum depth\t\t-> " << mCamMaxDepth << " m");
   mNhNs.getParam("depth/depth_downsample_factor", mCamDepthResizeFactor);
   NODELET_INFO_STREAM(" * Depth resample factor\t-> " << mCamDepthResizeFactor);
-  // <----- Depth
+}
 
+void ZEDWrapperNodelet::setupTracking()
+{
   NODELET_INFO_STREAM("*** POSITIONAL TRACKING PARAMETERS ***");
 
-  // ----> Tracking
   mNhNs.param<bool>("pos_tracking/pos_tracking_enabled", mPosTrackingEnabled, true);
   NODELET_INFO_STREAM(" * Positional tracking\t\t-> " << (mPosTrackingEnabled ? "ENABLED" : "DISABLED"));
   mNhNs.getParam("pos_tracking/path_pub_rate", mPathPubRate);
@@ -674,18 +675,20 @@ void ZEDWrapperNodelet::readParameters()
   {
     NODELET_INFO_STREAM(" * Fixed Z value\t\t-> " << mFixedZValue);
   }
-  // <---- Tracking
+}
 
+void ZEDWrapperNodelet::setupSensors()
+{
   NODELET_INFO_STREAM("*** SENSORS PARAMETERS ***");
 
-  // ----> Sensors
   mNhNs.getParam("sensors/sensors_timestamp_sync", mSensTimestampSync);
   NODELET_INFO_STREAM(" * Sensors timestamp sync\t-> " << (mSensTimestampSync ? "ENABLED" : "DISABLED"));
-  // <---- Sensors
+}
 
+void ZEDWrapperNodelet::setupSvo()
+{
   NODELET_INFO_STREAM("*** SVO PARAMETERS ***");
 
-  // ----> SVO
   mNhNs.param<std::string>("svo_file", mSvoFilepath, std::string());
   NODELET_INFO_STREAM(" * SVO input file: \t\t-> " << mSvoFilepath.c_str());
 
@@ -712,14 +715,13 @@ void ZEDWrapperNodelet::readParameters()
   mSvoComprMode = static_cast<sl::SVO_COMPRESSION_MODE>(svo_compr);
 
   NODELET_INFO_STREAM(" * SVO REC compression\t\t-> " << sl::toString(mSvoComprMode));
-  // <---- SVO
 
   // Remote Stream
   mNhNs.param<std::string>("stream", mRemoteStreamAddr, std::string());
+}
 
-  NODELET_INFO_STREAM("*** COORDINATE FRAMES ***");
-
-  // ----> Coordinate frames
+void ZEDWrapperNodelet::setupCoordinateFrames()
+{
   mNhNs.param<std::string>("pos_tracking/map_frame", mMapFrameId, "map");
   mNhNs.param<std::string>("pos_tracking/odometry_frame", mOdometryFrameId, "odom");
   mNhNs.param<std::string>("general/base_frame", mBaseFrameId, "base_link");
@@ -746,25 +748,36 @@ void ZEDWrapperNodelet::readParameters()
   mConfidenceFrameId = mDepthFrameId;
   mConfidenceOptFrameId = mDepthOptFrameId;
 
-  // Print TF frames
-  NODELET_INFO_STREAM(" * map_frame\t\t\t-> " << mMapFrameId);
-  NODELET_INFO_STREAM(" * odometry_frame\t\t-> " << mOdometryFrameId);
-  NODELET_INFO_STREAM(" * base_frame\t\t\t-> " << mBaseFrameId);
-  NODELET_INFO_STREAM(" * camera_frame\t\t\t-> " << mCameraFrameId);
-  NODELET_INFO_STREAM(" * imu_link\t\t\t-> " << mImuFrameId);
-  NODELET_INFO_STREAM(" * left_camera_frame\t\t-> " << mLeftCamFrameId);
-  NODELET_INFO_STREAM(" * left_camera_optical_frame\t-> " << mLeftCamOptFrameId);
-  NODELET_INFO_STREAM(" * right_camera_frame\t\t-> " << mRightCamFrameId);
-  NODELET_INFO_STREAM(" * right_camera_optical_frame\t-> " << mRightCamOptFrameId);
-  NODELET_INFO_STREAM(" * depth_frame\t\t\t-> " << mDepthFrameId);
-  NODELET_INFO_STREAM(" * depth_optical_frame\t\t-> " << mDepthOptFrameId);
-  NODELET_INFO_STREAM(" * disparity_frame\t\t-> " << mDisparityFrameId);
-  NODELET_INFO_STREAM(" * disparity_optical_frame\t-> " << mDisparityOptFrameId);
-  NODELET_INFO_STREAM(" * confidence_frame\t\t-> " << mConfidenceFrameId);
-  NODELET_INFO_STREAM(" * confidence_optical_frame\t-> " << mConfidenceOptFrameId);
-  // <---- Coordinate frames
+  logTFFrames();
+}
 
-  // ----> TF broadcasting
+// TODO(lucasw) have this take a log level argument
+void ZEDWrapperNodelet::logTFFrames()
+{
+  std::stringstream ss;
+  ss << "*** COORDINATE FRAMES ***" << "\n";;
+
+  ss << " * map_frame\t\t\t-> " << mMapFrameId << "\n";
+  ss << " * odometry_frame\t\t-> " << mOdometryFrameId << "\n";
+  ss << " * base_frame\t\t\t-> " << mBaseFrameId << "\n";
+  ss << " * camera_frame\t\t\t-> " << mCameraFrameId << "\n";
+  ss << " * imu_link\t\t\t-> " << mImuFrameId << "\n";
+  ss << " * left_camera_frame\t\t-> " << mLeftCamFrameId << "\n";
+  ss << " * left_camera_optical_frame\t-> " << mLeftCamOptFrameId << "\n";
+  ss << " * right_camera_frame\t\t-> " << mRightCamFrameId << "\n";
+  ss << " * right_camera_optical_frame\t-> " << mRightCamOptFrameId << "\n";
+  ss << " * depth_frame\t\t\t-> " << mDepthFrameId << "\n";
+  ss << " * depth_optical_frame\t\t-> " << mDepthOptFrameId << "\n";
+  ss << " * disparity_frame\t\t-> " << mDisparityFrameId << "\n";
+  ss << " * disparity_optical_frame\t-> " << mDisparityOptFrameId << "\n";
+  ss << " * confidence_frame\t\t-> " << mConfidenceFrameId << "\n";
+  ss << " * confidence_optical_frame\t-> " << mConfidenceOptFrameId << "\n";
+
+  NODELET_DEBUG_STREAM(ss.str());
+}
+
+void ZEDWrapperNodelet::setupTFBroadcasting()
+{
   mNhNs.param<bool>("pos_tracking/publish_tf", mPublishTf, true);
   NODELET_INFO_STREAM(" * Broadcast odometry TF\t-> " << (mPublishTf ? "ENABLED" : "DISABLED"));
   mNhNs.param<bool>("pos_tracking/publish_map_tf", mPublishMapTf, true);
@@ -772,47 +785,50 @@ void ZEDWrapperNodelet::readParameters()
                       << (mPublishTf ? (mPublishMapTf ? "ENABLED" : "DISABLED") : "DISABLED"));
   mNhNs.param<bool>("sensors/publish_imu_tf", mPublishImuTf, true);
   NODELET_INFO_STREAM(" * Broadcast IMU pose TF\t-> " << (mPublishImuTf ? "ENABLED" : "DISABLED"));
-  // <---- TF broadcasting
+}
 
-  NODELET_INFO_STREAM("*** DYNAMIC PARAMETERS (Init. values) ***");
+void ZEDWrapperNodelet::setupDynamicParameters()
+{
+  std::stringstream ss;
 
-  // ----> Dynamic
+  ss << "*** DYNAMIC PARAMETERS (Init. values) ***\n";
+
   mNhNs.getParam("depth_confidence", mCamDepthConfidence);
-  NODELET_INFO_STREAM(" * [DYN] Depth confidence\t-> " << mCamDepthConfidence);
+  ss << " * [DYN] Depth confidence\t-> " << mCamDepthConfidence << "\n";
   mNhNs.getParam("depth_texture_conf", mCamDepthTextureConf);
-  NODELET_INFO_STREAM(" * [DYN] Depth texture conf.\t-> " << mCamDepthTextureConf);
+  ss << " * [DYN] Depth texture conf.\t-> " << mCamDepthTextureConf << "\n";
 
   mNhNs.getParam("pub_frame_rate", mVideoDepthFreq);
-  NODELET_INFO_STREAM(" * [DYN] pub_frame_rate\t\t-> " << mVideoDepthFreq << " Hz");
+  ss << " * [DYN] pub_frame_rate\t\t-> " << mVideoDepthFreq << " Hz" << "\n";
   mNhNs.getParam("brightness", mCamBrightness);
-  NODELET_INFO_STREAM(" * [DYN] brightness\t\t-> " << mCamBrightness);
+  ss << " * [DYN] brightness\t\t-> " << mCamBrightness << "\n";
   mNhNs.getParam("contrast", mCamContrast);
-  NODELET_INFO_STREAM(" * [DYN] contrast\t\t-> " << mCamContrast);
+  ss << " * [DYN] contrast\t\t-> " << mCamContrast << "\n";
   mNhNs.getParam("hue", mCamHue);
-  NODELET_INFO_STREAM(" * [DYN] hue\t\t\t-> " << mCamHue);
+  ss << " * [DYN] hue\t\t\t-> " << mCamHue << "\n";
   mNhNs.getParam("saturation", mCamSaturation);
-  NODELET_INFO_STREAM(" * [DYN] saturation\t\t-> " << mCamSaturation);
+  ss << " * [DYN] saturation\t\t-> " << mCamSaturation << "\n";
   mNhNs.getParam("sharpness", mCamSharpness);
-  NODELET_INFO_STREAM(" * [DYN] sharpness\t\t-> " << mCamSharpness);
+  ss << " * [DYN] sharpness\t\t-> " << mCamSharpness << "\n";
 #if (ZED_SDK_MAJOR_VERSION == 3 && ZED_SDK_MINOR_VERSION >= 1)
   mNhNs.getParam("gamma", mCamGamma);
-  NODELET_INFO_STREAM(" * [DYN] gamma\t\t\t-> " << mCamGamma);
+  ss << " * [DYN] gamma\t\t\t-> " << mCamGamma << "\n";
 #endif
   mNhNs.getParam("auto_exposure_gain", mCamAutoExposure);
-  NODELET_INFO_STREAM(" * [DYN] auto_exposure_gain\t-> " << (mCamAutoExposure ? "ENABLED" : "DISABLED"));
+  ss << " * [DYN] auto_exposure_gain\t-> " << (mCamAutoExposure ? "ENABLED" : "DISABLED") << "\n";
   mNhNs.getParam("gain", mCamGain);
   mNhNs.getParam("exposure", mCamExposure);
   if (!mCamAutoExposure)
   {
-    NODELET_INFO_STREAM("  * [DYN] gain\t\t-> " << mCamGain);
-    NODELET_INFO_STREAM("  * [DYN] exposure\t\t-> " << mCamExposure);
+    ss << "  * [DYN] gain\t\t-> " << mCamGain << "\n";
+    ss << "  * [DYN] exposure\t\t-> " << mCamExposure << "\n";
   }
   mNhNs.getParam("auto_whitebalance", mCamAutoWB);
-  NODELET_INFO_STREAM(" * [DYN] auto_whitebalance\t-> " << (mCamAutoWB ? "ENABLED" : "DISABLED"));
-  mNhNs.getParam("whitebalance_temperature", mCamWB);
+  ss << " * [DYN] auto_whitebalance\t-> " << (mCamAutoWB ? "ENABLED" : "DISABLED") << "\n";
+  mNhNs.getParam("whitebalance_temperature", mCamWB );
   if (!mCamAutoWB)
   {
-    NODELET_INFO_STREAM("  * [DYN] whitebalance_temperature\t\t-> " << mCamWB);
+    ss << "  * [DYN] whitebalance_temperature\t\t-> " << mCamWB << "\n";
   }
 
   if (mCamAutoExposure)
@@ -823,7 +839,22 @@ void ZEDWrapperNodelet::readParameters()
   {
     mTriggerAutoWB = true;
   }
-  // <---- Dynamic
+
+  NODELET_INFO_STREAM(ss.str());
+}
+
+void ZEDWrapperNodelet::readParameters()
+{
+  // Get parameters from rosparams
+  setupGeneral();
+  setupVideo();
+  setupDepth();
+  setupTracking();
+  setupSensors();
+  setupSvo();
+  setupCoordinateFrames();
+  setupTFBroadcasting();
+  setupDynamicParameters();
 }
 
 void ZEDWrapperNodelet::checkResolFps()

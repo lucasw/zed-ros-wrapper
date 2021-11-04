@@ -109,6 +109,17 @@ protected:
    */
   virtual void onInit();
 
+  void setupGeneral();
+  void setupVideo();
+  void setupDepth();
+  void setupTracking();
+  void setupSensors();
+  void setupSvo();
+  void setupCoordinateFrames();
+  void logTFFrames();
+  void setupTFBroadcasting();
+  void setupDynamicParameters();
+
   /*! \brief Reads parameters from the param server
    */
   void readParameters();
