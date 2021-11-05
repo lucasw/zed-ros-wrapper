@@ -366,10 +366,10 @@ void ZEDWrapperNodelet::onInit()
   image_transport::ImageTransport it_zed(mNhNs);
 
   mPubLeft = it_zed.advertiseCamera("left/image_rect_color", 1);
-  mPubRawLeft = it_zed.advertiseCamera("left/image_raw_color", 1);
+  mPubRawLeft = it_zed.advertiseCamera("left_raw/image_raw_color", 1);
   mPubRight = it_zed.advertiseCamera("right/image_rect_color", 1);
-  mPubRawRight = it_zed.advertiseCamera("right/image_raw_color", 1);
-  mPubDepth = it_zed.advertiseCamera("depth_registered", 1);
+  mPubRawRight = it_zed.advertiseCamera("right_raw/image_raw_color", 1);
+  mPubDepth = it_zed.advertiseCamera("depth/depth_registered", 1);
 
   if (mUseSimTime)
   {
