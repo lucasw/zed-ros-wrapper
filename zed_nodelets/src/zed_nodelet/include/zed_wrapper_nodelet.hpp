@@ -370,22 +370,11 @@ private:
   const double mSensPubRate = 400.0;
 
   // Publishers
-  image_transport::CameraPublisher mPubRgb;       //
-  image_transport::CameraPublisher mPubRawRgb;    //
   image_transport::CameraPublisher mPubLeft;      //
   image_transport::CameraPublisher mPubRawLeft;   //
   image_transport::CameraPublisher mPubRight;     //
   image_transport::CameraPublisher mPubRawRight;  //
   image_transport::CameraPublisher mPubDepth;     //
-  image_transport::Publisher mPubStereo;
-  image_transport::Publisher mPubRawStereo;
-
-  image_transport::CameraPublisher mPubRgbGray;
-  image_transport::CameraPublisher mPubRawRgbGray;
-  image_transport::CameraPublisher mPubLeftGray;
-  image_transport::CameraPublisher mPubRawLeftGray;
-  image_transport::CameraPublisher mPubRightGray;
-  image_transport::CameraPublisher mPubRawRightGray;
 
   ros::Publisher mPubSimClock;
 
@@ -425,10 +414,8 @@ private:
 
   // ----> Topics (ONLY THOSE NOT CHANGING WHILE NODE RUNS)
   // Camera info
-  sensor_msgs::CameraInfoPtr mRgbCamInfoMsg;
   sensor_msgs::CameraInfoPtr mLeftCamInfoMsg;
   sensor_msgs::CameraInfoPtr mRightCamInfoMsg;
-  sensor_msgs::CameraInfoPtr mRgbCamInfoRawMsg;
   sensor_msgs::CameraInfoPtr mLeftCamInfoRawMsg;
   sensor_msgs::CameraInfoPtr mRightCamInfoRawMsg;
   sensor_msgs::CameraInfoPtr mDepthCamInfoMsg;
@@ -440,9 +427,6 @@ private:
   tf2_ros::TransformBroadcaster mTransformPoseBroadcaster;
   tf2_ros::TransformBroadcaster mTransformOdomBroadcaster;
   tf2_ros::StaticTransformBroadcaster mStaticTransformImuBroadcaster;
-
-  std::string mRgbFrameId;
-  std::string mRgbOptFrameId;
 
   std::string mDepthFrameId;
   std::string mDepthOptFrameId;
