@@ -67,12 +67,10 @@ void ZEDWrapperNodelet::onInit()
   mPcDataReady = false;
 
 #ifndef NDEBUG
-
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
   {
     ros::console::notifyLoggerLevelsChanged();
   }
-
 #endif
 
   NODELET_INFO("********** Starting nodelet '%s' **********", getName().c_str());
@@ -90,45 +88,12 @@ void ZEDWrapperNodelet::onInit()
   }
 
   readParameters();
-
   initTransforms();
-
-  // Set the video topic names
-  std::string rgbTopicRoot = "rgb";
-  std::string rightTopicRoot = "right";
-  std::string leftTopicRoot = "left";
-  std::string img_topic = "/image_rect_color";
-  std::string img_raw_topic = "/image_raw_color";
-  std::string raw_suffix = "_raw";
-  string left_topic = leftTopicRoot + img_topic;
-  string left_raw_topic = leftTopicRoot + raw_suffix + img_raw_topic;
-  string right_topic = rightTopicRoot + img_topic;
-  string right_raw_topic = rightTopicRoot + raw_suffix + img_raw_topic;
-
-  // Set the disparity topic name
-  std::string disparityTopic = "disparity/disparity_image";
-
-  // Set the depth topic names
-  string depth_topic_root = "depth";
 
   if (mOpenniDepthMode)
   {
     NODELET_INFO_STREAM("Openni depth mode activated -> Units: mm, Encoding: TYPE_16UC1");
   }
-  depth_topic_root += "/depth_registered";
-
-  std::string confImgRoot = "confidence";
-  string conf_map_topic_name = "confidence_map";
-  string conf_map_topic = confImgRoot + "/" + conf_map_topic_name;
-
-  // Set the positional tracking topic names
-  std::string poseTopic = "pose";
-  string pose_cov_topic;
-  pose_cov_topic = poseTopic + "_with_covariance";
-
-  std::string odometryTopic = "odom";
-  string odom_path_topic = "path_odom";
-  string map_path_topic = "path_map";
 
   // Create camera info
   mLeftCamInfoMsg.reset(new sensor_msgs::CameraInfo());
@@ -400,28 +365,29 @@ void ZEDWrapperNodelet::onInit()
   // Image publishers
   image_transport::ImageTransport it_zed(mNhNs);
 
-  mPubLeft = it_zed.advertiseCamera(left_topic, 1);  // left
-  mPubRawLeft = it_zed.advertiseCamera(left_raw_topic, 1);  // left raw
-  mPubRight = it_zed.advertiseCamera(right_topic, 1);  // right
-  mPubRawRight = it_zed.advertiseCamera(right_raw_topic, 1);  // right raw
-  mPubDepth = it_zed.advertiseCamera(depth_topic_root, 1);  // depth
+  mPubLeft = it_zed.advertiseCamera("left/image_rect_color", 1);
+  mPubRawLeft = it_zed.advertiseCamera("left/image_raw_color", 1);
+  mPubRight = it_zed.advertiseCamera("right/image_rect_color", 1);
+  mPubRawRight = it_zed.advertiseCamera("right/image_raw_color", 1);
+  mPubDepth = it_zed.advertiseCamera("depth_registered", 1);
 
   if (mUseSimTime)
   {
     mPubSimClock = mNhNs.advertise<rosgraph_msgs::Clock>("/clock", 2);
   }
 
-  mPubConfMap = mNhNs.advertise<sensor_msgs::Image>(conf_map_topic, 1);  // confidence map
-  mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>(disparityTopic, static_cast<int>(mVideoDepthFreq));
-  mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>(poseTopic, 1);
-  mPubPoseCov = mNhNs.advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_cov_topic, 1);
-  mPubOdom = mNhNs.advertise<nav_msgs::Odometry>(odometryTopic, 1);
+  mPubConfMap = mNhNs.advertise<sensor_msgs::Image>("confidence/confidence_map", 1);  // confidence map
+  mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>("disparity/disparity_topic",
+      static_cast<int>(mVideoDepthFreq));
+  mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>("pose", 1);
+  mPubPoseCov = mNhNs.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose_with_covariance", 1);
+  mPubOdom = mNhNs.advertise<nav_msgs::Odometry>("odom", 1);
 
   // Camera Path
   if (mPathPubRate > 0)
   {
-    mPubOdomPath = mNhNs.advertise<nav_msgs::Path>(odom_path_topic, 1, true);
-    mPubMapPath = mNhNs.advertise<nav_msgs::Path>(map_path_topic, 1, true);
+    mPubOdomPath = mNhNs.advertise<nav_msgs::Path>("path_odom", 1, true);
+    mPubMapPath = mNhNs.advertise<nav_msgs::Path>("path_map", 1, true);
 
     mPathTimer = mNhNs.createTimer(ros::Duration(1.0 / mPathPubRate), &ZEDWrapperNodelet::callback_pubPath, this);
 
