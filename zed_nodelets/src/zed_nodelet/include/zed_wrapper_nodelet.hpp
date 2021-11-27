@@ -375,10 +375,10 @@ private:
   image_transport::CameraPublisher mPubRight;     //
   image_transport::CameraPublisher mPubRawRight;  //
   image_transport::CameraPublisher mPubDepth;     //
+  image_transport::CameraPublisher mPubConfMap;
 
   ros::Publisher mPubSimClock;
 
-  ros::Publisher mPubConfMap;    //
   ros::Publisher mPubDisparity;  //
   ros::Publisher mPubCloud;
   ros::Publisher mPubPose;

@@ -370,13 +370,13 @@ void ZEDWrapperNodelet::onInit()
   mPubRight = it_zed.advertiseCamera("right/image_rect_color", 1);
   mPubRawRight = it_zed.advertiseCamera("right_raw/image_raw_color", 1);
   mPubDepth = it_zed.advertiseCamera("depth/depth_registered", 1);
+  mPubConfMap = it_zed.advertiseCamera("confidence/confidence_map", 1);
 
   if (mUseSimTime)
   {
     mPubSimClock = mNhNs.advertise<rosgraph_msgs::Clock>("/clock", 2);
   }
 
-  mPubConfMap = mNhNs.advertise<sensor_msgs::Image>("confidence/confidence_map", 1);  // confidence map
   mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>("disparity/disparity_topic",
       static_cast<int>(mVideoDepthFreq));
   mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>("pose", 1);
@@ -2188,7 +2188,9 @@ void ZEDWrapperNodelet::callback_pubVideoDepth(const ros::TimerEvent& e)
   {
     sensor_msgs::ImagePtr confMapMsg = boost::make_shared<sensor_msgs::Image>();
     sl_tools::imageToROSmsg(confMapMsg, mat_conf, mConfidenceOptFrameId, stamp);
-    mPubConfMap.publish(confMapMsg);
+    // TODO(lucasw) reuse depth cam info, probably is correct for confidence map?
+    mDepthCamInfoMsg->header.stamp = stamp;
+    mPubConfMap.publish(confMapMsg, mDepthCamInfoMsg);
   }
 }
 
