@@ -2854,6 +2854,13 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         runParams.enable_depth = false;  // Ask to not compute the depth
       }
 
+      if (mSvoMode) {
+        // give even more time for subsribers like rosbag to keep up
+        ros::WallDuration(0.1).sleep();
+      }
+
+      // TODO(lucasw) have dynamic reconfigure skip parameter to loop on grap to skip ahead,
+      // or use sdk features to jump in position
       mCamDataMutex.lock();
       mGrabStatus = mZed.grab(runParams);
       mCamDataMutex.unlock();
@@ -2867,9 +2874,12 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         // the zed have been disconnected) and
         // re-initialize the ZED
 
-        // TODO(lucasw) if the status is END OF SVO FILE REACHED then loop it optionally,
-        // or exit.
         NODELET_INFO_STREAM_ONCE(toString(mGrabStatus));
+
+        // TODO(lucasw) if the status is END OF SVO FILE REACHED then loop it optionally
+        if (mGrabStatus == sl::ERROR_CODE::END_OF_SVOFILE_REACHED) {
+          return;
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
