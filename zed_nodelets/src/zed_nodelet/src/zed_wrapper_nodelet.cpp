@@ -112,7 +112,15 @@ void ZEDWrapperNodelet::onInit()
     if (!mSvoFilepath.empty())
     {
       mZedParams.input.setFromSVOFile(mSvoFilepath.c_str());
-      mZedParams.svo_real_time_mode = true;
+      /**
+        from sl/Camera.hpp
+        When playing back an SVO file, each call to \ref Camera::grab() will extract a new frame and use it.
+        However, this ignores the real capture rate of the images saved in the SVO file.
+        Enabling this parameter will bring the SDK closer to a real simulation when playing back a file by
+        using the images' timestamps. However, calls to \ref Camera::grab() will return an error when trying
+        to play too fast, and frames will be dropped when playing too slowly.
+      */
+      mZedParams.svo_real_time_mode = false;
 
       // TODO ADD PARAMETER FOR SVO REAL TIME
     }
