@@ -6,15 +6,14 @@ project(zed_interfaces)
 #list(APPEND CMAKE_PREFIX_PATH "/opt/ros/$ENV{ROS_DISTRO}/")
 
 find_package(catkin REQUIRED COMPONENTS
-  std_msgs
   geometry_msgs
-  sensor_msgs
-  #actionlib_msgs
   message_generation
+  sensor_msgs
+  std_msgs
 )
 
-add_message_files( 
-    DIRECTORY msg 
+add_message_files(
+    DIRECTORY msg
     FILES
     BoundingBox2Df.msg
     BoundingBox2Di.msg
@@ -24,47 +23,44 @@ add_message_files(
     Keypoint3D.msg
     Object.msg
     ObjectsStamped.msg
+    RGBDSensors.msg
     Skeleton2D.msg
     Skeleton3D.msg
-    RGBDSensors.msg
   )
 
-#add_action_files(DIRECTORY action FILES act.action)
-
-add_service_files( 
-    DIRECTORY srv 
+add_service_files(
+    DIRECTORY srv
     FILES
-    set_pose.srv
     reset_odometry.srv
     reset_tracking.srv
-    start_svo_recording.srv
-    stop_svo_recording.srv
-    start_remote_stream.srv
-    stop_remote_stream.srv
     set_led_status.srv
-    toggle_led.srv
+    set_pose.srv
     start_3d_mapping.srv
-    stop_3d_mapping.srv
     start_object_detection.srv
+    start_remote_stream.srv
+    start_svo_recording.srv
+    stop_3d_mapping.srv
     stop_object_detection.srv
+    stop_remote_stream.srv
+    stop_svo_recording.srv
+    toggle_led.srv
   )
 
 generate_messages(
     DEPENDENCIES
-    #actionlib_msgs
-    std_msgs
     geometry_msgs
     sensor_msgs
+    std_msgs
 )
 
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS 
-    message_generation 
-    std_msgs 
-    geometry_msgs 
+    CATKIN_DEPENDS
+    geometry_msgs
+    message_generation
+    message_runtime
     sensor_msgs
-    #actionlib_msgs
+    std_msgs
 )
 
 ###############################################################################

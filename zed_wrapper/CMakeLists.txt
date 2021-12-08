@@ -8,15 +8,18 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rosconsole
   nodelet
+  rosconsole
+  roscpp
+  xacro
+  zed_nodelets
 )
 
 catkin_package(
   CATKIN_DEPENDS
-    roscpp
+    nodelet
     rosconsole
+    roscpp
     zed_nodelets
 )
 
@@ -36,9 +39,6 @@ include_directories(
         ${ZED_INCLUDE_DIRS}
 )
 
-link_directories(${ZED_LIBRARY_DIR})
-link_directories(${CUDA_LIBRARY_DIRS})
-
 ###############################################################################
 
 ###############################################################################
@@ -51,6 +51,8 @@ set(LINK_LIBRARIES
 
 add_executable(zed_wrapper_node ${NODE_SRC})
 target_link_libraries(zed_wrapper_node ${LINK_LIBRARIES})
+# target_link_directories(zed_wrapper_node ${ZED_LIBRARY_DIR})
+# target_link_directories(zed_wrapper_node ${CUDA_LIBRARY_DIRS})
 add_dependencies(zed_wrapper_node ${catkin_EXPORTED_TARGETS})
 
 
@@ -71,6 +73,6 @@ install(TARGETS
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY
   launch
-  urdf
   params
+  urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

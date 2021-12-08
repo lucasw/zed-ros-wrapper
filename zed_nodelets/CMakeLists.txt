@@ -39,20 +39,21 @@ if (OPENMP_FOUND)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS
-    roscpp
+    diagnostic_updater
+    dynamic_reconfigure
     image_transport
+    message_filters
+    message_generation
+    nav_msgs
+    nodelet
     rosconsole
+    roscpp
     rosgraph_msgs
     sensor_msgs
-    stereo_msgs
     std_msgs
-    message_filters
-    tf2_ros
-    nodelet
+    stereo_msgs
     tf2_geometry_msgs
-    message_generation
-    diagnostic_updater    
-    dynamic_reconfigure
+    tf2_ros
     zed_interfaces
 )
 
@@ -62,26 +63,29 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   CATKIN_DEPENDS
-    roscpp
+    dynamic_reconfigure
+    image_transport
+    message_filters
+    message_runtime
+    nav_msgs
+    nodelet
     rosconsole
+    roscpp
+    rosgraph_msgs
     sensor_msgs
     stereo_msgs
-    message_filters
-    image_transport
-    dynamic_reconfigure
-    tf2_ros
     tf2_geometry_msgs
-    message_runtime    
+    tf2_ros
     zed_interfaces
 )
 
 ###############################################################################
 # SOURCES
 
+set(RGBD_SENS_DEMUX_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_demux_nodelet/src/rgbd_sensor_demux.cpp)
+set(RGBD_SENS_SYNC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_sync_nodelet/src/rgbd_sensor_sync.cpp)
 set(TOOLS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/src/sl_tools.cpp)
 set(ZED_NODELET_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_nodelet/src/zed_wrapper_nodelet.cpp)
-set(RGBD_SENS_SYNC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_sync_nodelet/src/rgbd_sensor_sync.cpp)
-set(RGBD_SENS_DEMUX_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_demux_nodelet/src/rgbd_sensor_demux.cpp)
 
 ###############################################################################
 
@@ -115,10 +119,10 @@ set(LINK_LIBRARIES
 )
 
 add_library(ZEDNodelets
+    ${RGBD_SENS_DEMUX_SRC}
+    ${RGBD_SENS_SYNC_SRC}
     ${TOOLS_SRC}
     ${ZED_NODELET_SRC}
-    ${RGBD_SENS_SYNC_SRC}
-    ${RGBD_SENS_DEMUX_SRC}
 )
 target_include_directories(ZEDNodelets PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(ZEDNodelets ${LINK_LIBRARIES})
