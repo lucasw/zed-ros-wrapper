@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.5)
 project(zed_nodelets)
 
 # if CMAKE_BUILD_TYPE is not specified, take 'Release' as default
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-function(checkPackage package customMessage)
+function(check_package package customMessage)
     set(varName "${package}_FOUND")
     if (NOT "${${varName}}")
         string(REPLACE "_" "-" aptPackage ${package})
@@ -17,21 +17,21 @@ function(checkPackage package customMessage)
             message(FATAL_ERROR "\n\n ${customMessage} \n\n")
         endif()
     endif()
-endfunction(checkPackage)
+endfunction()
 
 find_package(ZED 3)
-checkPackage("ZED" "ZED SDK v3.x not found, install it from:\n https://www.stereolabs.com/developers/")
+check_package("ZED" "ZED SDK v3.x not found, install it from:\n https://www.stereolabs.com/developers/")
 
 exec_program(uname ARGS -p OUTPUT_VARIABLE CMAKE_SYSTEM_NAME2)
 if ( CMAKE_SYSTEM_NAME2 MATCHES "aarch64" ) # Jetson TX
-    SET(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
+    set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 endif()
 
 find_package(CUDA)
-checkPackage("CUDA" "CUDA not found, install it from:\n https://developer.nvidia.com/cuda-downloads")
+check_package("CUDA" "CUDA not found, install it from:\n https://developer.nvidia.com/cuda-downloads")
 
 find_package(OpenMP)
-checkPackage("OpenMP" "OpenMP not found, please install it to improve performances: 'sudo apt install libomp-dev'")
+check_package("OpenMP" "OpenMP not found, please install it to improve performances: 'sudo apt install libomp-dev'")
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -136,7 +136,7 @@ add_dependencies(
 
 #Add all files in subdirectories of the project in
 # a dummy_target so qtcreator have access to all files
-FILE(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
+file(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
 add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
 
 ###############################################################################

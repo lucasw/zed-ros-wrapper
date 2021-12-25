@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.5)
 project(zed_wrapper)
 
 # if CMAKE_BUILD_TYPE is not specified, take 'Release' as default
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
 find_package(catkin REQUIRED COMPONENTS
   nodelet
@@ -26,7 +26,7 @@ catkin_package(
 ###############################################################################
 # SOURCES
 
-set(NODE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_wrapper_node.cpp)
+set(NODE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}_node.cpp)
 ###############################################################################
 
 ###############################################################################
@@ -49,25 +49,25 @@ set(LINK_LIBRARIES
   ${catkin_LIBRARIES}
 )
 
-add_executable(zed_wrapper_node ${NODE_SRC})
-target_link_libraries(zed_wrapper_node ${LINK_LIBRARIES})
-# target_link_directories(zed_wrapper_node ${ZED_LIBRARY_DIR})
-# target_link_directories(zed_wrapper_node ${CUDA_LIBRARY_DIRS})
-add_dependencies(zed_wrapper_node ${catkin_EXPORTED_TARGETS})
+add_executable(${PROJECT_NAME}_node ${NODE_SRC})
+target_link_libraries(${PROJECT_NAME}_node ${LINK_LIBRARIES})
+# target_link_directories(${PROJECT_NAME}_node ${ZED_LIBRARY_DIR})
+# target_link_directories(${PROJECT_NAME}_node ${CUDA_LIBRARY_DIRS})
+add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 
 
 ###############################################################################
 #Add all files in subdirectories of the project in
 
 # a dummy_target so qtcreator have access to all files
-FILE(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
+file(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
 add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
 
 ###############################################################################
 # INSTALL
 
 install(TARGETS
-  zed_wrapper_node
+  ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
