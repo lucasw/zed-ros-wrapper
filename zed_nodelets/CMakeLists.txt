@@ -103,8 +103,9 @@ set(INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_demux_nodelet/include
 )
 
-link_directories(${ZED_LIBRARY_DIR})
-link_directories(${CUDA_LIBRARY_DIRS})
+# TODO(lucasw) I think these are already known
+# link_directories(${ZED_LIBRARY_DIR})
+# link_directories(${CUDA_LIBRARY_DIRS})
 
 ###############################################################################
 
