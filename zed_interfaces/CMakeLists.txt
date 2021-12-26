@@ -54,7 +54,6 @@ generate_messages(
 )
 
 catkin_package(
-    INCLUDE_DIRS include
     CATKIN_DEPENDS
     geometry_msgs
     message_generation
