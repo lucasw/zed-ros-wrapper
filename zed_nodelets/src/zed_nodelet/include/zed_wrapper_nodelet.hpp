@@ -105,6 +105,14 @@ public:
   virtual ~ZEDWrapperNodelet();
 
 protected:
+  void checkVersion();
+  bool initCamera();
+  bool initZedParams();
+  void checkCameraModel();
+  void initDynamicReconfigure();
+  void initAllPublishers();
+  void initAllServices();
+
   /*! \brief Initialization function called by the Nodelet base class
    */
   virtual void onInit();
@@ -138,6 +146,10 @@ protected:
   /*! \brief get ZED image time or current time depending on params
    */
   ros::Time getTimestamp();
+
+  /*! \brief update dynamic reconfigure parameters in the camera
+   */
+  bool updateCameraWithDynParams();
 
   /*! \brief ZED camera polling thread function
    */
@@ -246,6 +258,21 @@ protected:
    */
   void callback_dynamicReconf(zed_nodelets::ZedConfig& config, uint32_t level);
 
+  bool getCamData(
+      const ros::Time update_stamp,
+      const bool get_left,
+      const bool get_left_raw,
+      const bool get_right,
+      const bool get_right_raw,
+      const bool get_depth,
+      const bool get_disparity,
+      const bool get_conf_map,
+      sl::Mat& mat_left, sl::Mat& mat_left_raw,
+      sl::Mat& mat_right, sl::Mat& mat_right_raw,
+      sl::Mat& mat_depth, sl::Mat& mat_disp, sl::Mat& mat_conf,
+      ros::Time& stamp,
+      sl::Timestamp& grab_ts, sl::Timestamp& lastZedTs);
+
   /*! \brief Callback to publish Video and Depth data
    * \param e : the ros::TimerEvent binded to the callback
    */
@@ -283,6 +310,10 @@ protected:
    *        Tracking pose is set to the new values
    */
   bool on_set_pose(zed_interfaces::set_pose::Request& req, zed_interfaces::set_pose::Response& res);
+
+  /*! \brief convenience function to try different compressions when starting recording
+   */
+  sl::ERROR_CODE enableRecordingAllCompressions(sl::RecordingParameters& recParams);
 
   /*! \brief Service callback to start_svo_recording service
    */
@@ -347,9 +378,9 @@ protected:
     return clr / 255.f;
   }
 
-  /*! \brief Update Dynamic reconfigure parameters
+  /*! \brief Update Dynamic reconfigure server parameters from member variables
    */
-  void updateDynamicReconfigure();
+  void updateDynamicReconfigureServer();
 
 private:
   uint64_t mFrameCount = 0;
