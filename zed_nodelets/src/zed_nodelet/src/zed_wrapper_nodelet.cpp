@@ -50,11 +50,6 @@ ZEDWrapperNodelet::~ZEDWrapperNodelet()
   {
     mDevicePollThread.join();
   }
-
-  if (mPcThread.joinable())
-  {
-    mPcThread.join();
-  }
 }
 
 void ZEDWrapperNodelet::initAllPublishers()

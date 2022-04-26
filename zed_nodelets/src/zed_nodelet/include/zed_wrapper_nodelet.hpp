@@ -61,7 +61,6 @@
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/distortion_models.h>
 #include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
 #include <stereo_msgs/DisparityImage.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -81,7 +80,6 @@ class ZEDWrapperNodelet : public nodelet::Nodelet
     DATAPUB_FREQ = 0,
     CONFIDENCE = 1,
     TEXTURE_CONF = 2,
-    POINTCLOUD_FREQ = 3,
     BRIGHTNESS = 4,
     CONTRAST = 5,
     HUE = 6,
@@ -394,7 +392,6 @@ private:
   ros::NodeHandle mNh;
   ros::NodeHandle mNhNs;
   std::thread mDevicePollThread;
-  std::thread mPcThread;  // Point Cloud thread
 
   bool mStopNode = false;
 
