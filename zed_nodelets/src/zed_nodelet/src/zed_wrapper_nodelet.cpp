@@ -271,7 +271,7 @@ bool ZEDWrapperNodelet::initCamera()
         {
           std::string msg = "ZED SN" + to_string(mZedSerialNumber) + " not detected ! Please connect this ZED";
           NODELET_INFO_STREAM(msg.c_str());
-          std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+          ros::WallDuration(2.0).sleep();
         }
         else
         {
@@ -403,7 +403,7 @@ bool ZEDWrapperNodelet::initZedParams()
   {
     mConnStatus = mZed.open(mZedParams);
     NODELET_INFO_STREAM("ZED connection -> " << sl::toString(mConnStatus));
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    ros::WallDuration(2.0).sleep();
 
     if (!mNhNs.ok())
     {
@@ -460,11 +460,13 @@ void ZEDWrapperNodelet::onInit()
   mStopNode = false;
   mPcDataReady = false;
 
+#if 0
 #ifndef NDEBUG
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
   {
     ros::console::notifyLoggerLevelsChanged();
   }
+#endif
 #endif
 
   NODELET_INFO("********** Starting nodelet '%s' **********", getName().c_str());
@@ -1250,31 +1252,28 @@ void ZEDWrapperNodelet::start_pos_tracking()
   NODELET_INFO(" * Waiting for valid static transformations...");
 
   bool transformOk = false;
-  double elapsed = 0.0;
+  ros::Duration elapsed(0.0);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = ros::Time::now();
 
   do
   {
     transformOk = set_pose(mInitialBasePose[0], mInitialBasePose[1], mInitialBasePose[2], mInitialBasePose[3],
                            mInitialBasePose[4], mInitialBasePose[5]);
+    elapsed = ros::Time::now() - start;
 
-    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start)
-                  .count();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    if (elapsed > 10000)
+    if (elapsed > ros::Duration(3.0))
     {
       NODELET_WARN(" !!! Failed to get static transforms. Is the 'ROBOT STATE PUBLISHER' node correctly working? ");
       break;
     }
 
+    ros::WallDuration(0.1).sleep();
   } while (transformOk == false);
 
   if (transformOk)
   {
-    NODELET_DEBUG("Time required to get valid static transforms: %g sec", elapsed / 1000.);
+    NODELET_DEBUG("Time required to get valid static transforms: %g sec", elapsed.toSec());
   }
 
   NODELET_INFO("Initial ZED left camera pose (ZED pos. tracking): ");
@@ -3046,7 +3045,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
             }
 
             mDiagUpdater.force_update();
-            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            ros::WallDuration(2.0).sleep();
           }
 
           mPosTrackingActivated = false;
@@ -3443,7 +3442,8 @@ void ZEDWrapperNodelet::device_poll_thread_func()
         }
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));  // No subscribers, we just wait
+      // No subscribers, we just wait
+      ros::WallDuration(0.01).sleep();
       loop_rate.reset();
     }
 
