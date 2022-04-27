@@ -250,8 +250,10 @@ bool ZEDWrapperNodelet::initCamera()
         // Ctrl+C check
         if (!mNhNs.ok())
         {
+          // TODO(lucasw) mStopNode is never looked at
           mStopNode = true;  // Stops other threads
 
+          // TODO(lucasw) make stop() method
           std::lock_guard<std::mutex> lock(mCloseZedMutex);
           NODELET_DEBUG("Closing ZED");
           mZed.close();
@@ -503,12 +505,9 @@ void ZEDWrapperNodelet::onInit()
 
   // start recording immediately if record parameter set
   if (mRecordSvoFilepath != "") {
-    zed_interfaces::start_svo_recording::Request req;
-    req.svo_filename = mRecordSvoFilepath;
-    zed_interfaces::start_svo_recording::Response res;
-    on_start_svo_recording(req, res);
-    if (res.result == false) {
-      ROS_ERROR_STREAM(res.info);
+    std::string info = "";
+    startRecording(mRecordSvoFilepath, info);
+    if (mRecording == false) {
       return;
     }
   }
@@ -2861,6 +2860,93 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
   return updated;
 }
 
+sl::ERROR_CODE ZEDWrapperNodelet::enableRecordingAllCompressions(sl::RecordingParameters& recParams)
+{
+  auto err = mZed.enableRecording(recParams);
+
+  // TODO(lucasw) roll this into a loop
+  if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
+  {
+    recParams.compression_mode = mSvoComprMode == sl::SVO_COMPRESSION_MODE::H265 ? sl::SVO_COMPRESSION_MODE::H264 :
+                                                                                   sl::SVO_COMPRESSION_MODE::H265;
+
+    NODELET_WARN_STREAM("The chosen " << sl::toString(mSvoComprMode).c_str() << "mode is not available. Trying "
+                                      << sl::toString(recParams.compression_mode).c_str());
+
+    err = mZed.enableRecording(recParams);
+
+    if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
+    {
+      NODELET_WARN_STREAM(sl::toString(recParams.compression_mode).c_str()
+                          << "not available. Trying " << sl::toString(sl::SVO_COMPRESSION_MODE::H264).c_str());
+      recParams.compression_mode = sl::SVO_COMPRESSION_MODE::H264;
+      err = mZed.enableRecording(recParams);
+
+      if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
+      {
+        recParams.compression_mode = sl::SVO_COMPRESSION_MODE::LOSSLESS;
+        err = mZed.enableRecording(recParams);
+      }
+    }
+  }
+  return err;
+}
+
+void ZEDWrapperNodelet::startRecording(const std::string& filename, std::string& info)
+{
+  std::lock_guard<std::mutex> lock(mRecMutex);
+
+  sl::RecordingParameters recParams;
+  recParams.compression_mode = mSvoComprMode;
+  recParams.video_filename = filename.c_str();
+  mRecordSvoFilepath = filename;
+  const auto err = enableRecordingAllCompressions(recParams);
+
+  if (err != sl::ERROR_CODE::SUCCESS)
+  {
+    info += sl::toString(err).c_str();
+    mRecording = false;
+    return;
+  }
+
+  mSvoComprMode = recParams.compression_mode;
+  NODELET_INFO_STREAM("SVO started recording '" << mRecordSvoFilepath << "' "
+                      << sl::toString(recParams.compression_mode));
+  mRecording = true;
+}
+
+void ZEDWrapperNodelet::stopRecording()
+{
+  std::lock_guard<std::mutex> lock(mRecMutex);
+  if (!mRecording)
+  {
+    return;
+  }
+  mZed.disableRecording();
+  NODELET_INFO_STREAM("SVO stopped recording '" << mRecordSvoFilepath << "'");
+  mRecording = false;
+}
+
+void ZEDWrapperNodelet::updateRecordingStatus()
+{
+  std::lock_guard<std::mutex> lock(mRecMutex);
+
+  if (!mRecording)
+  {
+    return;
+  }
+
+  mRecStatus = mZed.getRecordingStatus();
+
+  if (!mRecStatus.status)
+  {
+    NODELET_ERROR_THROTTLE(1.0, "Error saving frame to SVO");
+  }
+
+  mDiagUpdater.force_update();
+}
+
+// TODO(lucasw) turn this into a ros update
 void ZEDWrapperNodelet::device_poll_thread_func()
 {
   ros::Rate loop_rate(mCamFrameRate);
@@ -2915,6 +3001,11 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   // Main loop
   while (mNhNs.ok())
   {
+    if (stop_recording_) {
+      stopRecording();
+      stop_recording_ = false;
+    }
+
     // Check for subscribers
     uint32_t leftSubnumber = mPubLeft.getNumSubscribers();
     uint32_t leftRawSubnumber = mPubRawLeft.getNumSubscribers();
@@ -3015,11 +3106,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
               std::lock_guard<std::mutex> lock(mCloseZedMutex);
               NODELET_DEBUG("Closing ZED");
-              if (mRecording)
-              {
-                mRecording = false;
-                mZed.disableRecording();
-              }
+              stopRecording();
               mZed.close();
 
               NODELET_DEBUG("ZED pool thread finished");
@@ -3061,21 +3148,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       mFrameCount++;
 
       // SVO recording
-      {
-        std::lock_guard<std::mutex> lock(mRecMutex);
-
-        if (mRecording)
-        {
-          mRecStatus = mZed.getRecordingStatus();
-
-          if (!mRecStatus.status)
-          {
-            NODELET_ERROR_THROTTLE(1.0, "Error saving frame to SVO");
-          }
-
-          mDiagUpdater.force_update();
-        }
-      }
+      updateRecordingStatus();
 
       // Timestamp
       mPrevFrameTimestamp = mFrameTimestamp;
@@ -3449,12 +3522,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
   std::lock_guard<std::mutex> lock(mCloseZedMutex);
   NODELET_DEBUG("Closing ZED");
-
-  if (mRecording)
-  {
-    mRecording = false;
-    mZed.disableRecording();
-  }
+  stopRecording();
   mZed.close();
 
   NODELET_DEBUG("ZED pool thread finished");
@@ -3593,43 +3661,9 @@ void ZEDWrapperNodelet::callback_updateDiagnostic(diagnostic_updater::Diagnostic
   }
 }
 
-sl::ERROR_CODE ZEDWrapperNodelet::enableRecordingAllCompressions(sl::RecordingParameters& recParams)
-{
-  auto err = mZed.enableRecording(recParams);
-
-  // TODO(lucasw) roll this into a loop
-  if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
-  {
-    recParams.compression_mode = mSvoComprMode == sl::SVO_COMPRESSION_MODE::H265 ? sl::SVO_COMPRESSION_MODE::H264 :
-                                                                                   sl::SVO_COMPRESSION_MODE::H265;
-
-    NODELET_WARN_STREAM("The chosen " << sl::toString(mSvoComprMode).c_str() << "mode is not available. Trying "
-                                      << sl::toString(recParams.compression_mode).c_str());
-
-    err = mZed.enableRecording(recParams);
-
-    if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
-    {
-      NODELET_WARN_STREAM(sl::toString(recParams.compression_mode).c_str()
-                          << "not available. Trying " << sl::toString(sl::SVO_COMPRESSION_MODE::H264).c_str());
-      recParams.compression_mode = sl::SVO_COMPRESSION_MODE::H264;
-      err = mZed.enableRecording(recParams);
-
-      if (err == sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION)
-      {
-        recParams.compression_mode = sl::SVO_COMPRESSION_MODE::LOSSLESS;
-        err = mZed.enableRecording(recParams);
-      }
-    }
-  }
-  return err;
-}
-
 bool ZEDWrapperNodelet::on_start_svo_recording(zed_interfaces::start_svo_recording::Request& req,
                                                zed_interfaces::start_svo_recording::Response& res)
 {
-  std::lock_guard<std::mutex> lock(mRecMutex);
-
   if (mRecording)
   {
     res.result = false;
@@ -3643,27 +3677,12 @@ bool ZEDWrapperNodelet::on_start_svo_recording(zed_interfaces::start_svo_recordi
     req.svo_filename = "zed.svo";
   }
 
-  sl::RecordingParameters recParams;
-  recParams.compression_mode = mSvoComprMode;
-  recParams.video_filename = req.svo_filename.c_str();
-  const auto err = enableRecordingAllCompressions(recParams);
-
-  if (err != sl::ERROR_CODE::SUCCESS)
-  {
-    res.result = false;
-    res.info = sl::toString(err).c_str();
-    mRecording = false;
-    return false;
-  }
-
-  mSvoComprMode = recParams.compression_mode;
-  mRecording = true;
   res.info = "SVO Recording started";
   res.info += " '" + req.svo_filename + "' ";
+  startRecording(req.svo_filename, res.info);
+  res.info += " ";
   res.info += sl::toString(mSvoComprMode).c_str();
-  res.result = true;
-
-  NODELET_INFO_STREAM(res.info);
+  res.result = mRecording;
 
   return true;
 }
@@ -3672,8 +3691,6 @@ bool ZEDWrapperNodelet::on_start_svo_recording(zed_interfaces::start_svo_recordi
 bool ZEDWrapperNodelet::on_stop_svo_recording(zed_interfaces::stop_svo_recording::Request& req,
                                               zed_interfaces::stop_svo_recording::Response& res)
 {
-  std::lock_guard<std::mutex> lock(mRecMutex);
-
   if (!mRecording)
   {
     res.done = false;
@@ -3681,13 +3698,14 @@ bool ZEDWrapperNodelet::on_stop_svo_recording(zed_interfaces::stop_svo_recording
     return false;
   }
 
-  mZed.disableRecording();
-  mRecording = false;
-  res.info = "Recording stopped";
-  res.done = true;
-
-  NODELET_INFO_STREAM("SVO recording STOPPED");
-
+  res.info = "SVO Recording stop commanded '" +  mRecordSvoFilepath + "'";
+  stop_recording_ = true;
+  // TODO(lucasw) if a second on_stop_svo_recording is triggered during the sleep
+  // does it re-enter here, foul this up?
+  NODELET_INFO_STREAM(res.info);
+  ros::Duration(0.25).sleep();
+  res.done = !stop_recording_;
+  NODELET_INFO_STREAM("stop recording: " << int(res.done));
   return true;
 }
 

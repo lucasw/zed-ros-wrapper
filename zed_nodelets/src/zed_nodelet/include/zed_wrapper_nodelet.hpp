@@ -309,10 +309,6 @@ protected:
    */
   bool on_set_pose(zed_interfaces::set_pose::Request& req, zed_interfaces::set_pose::Response& res);
 
-  /*! \brief convenience function to try different compressions when starting recording
-   */
-  sl::ERROR_CODE enableRecordingAllCompressions(sl::RecordingParameters& recParams);
-
   /*! \brief Service callback to start_svo_recording service
    */
   bool on_start_svo_recording(zed_interfaces::start_svo_recording::Request& req,
@@ -600,6 +596,22 @@ private:
   bool mPublishingData = false;
 
   // SVO recording
+  /*! \brief convenience function to try different compressions when starting recording
+   */
+  sl::ERROR_CODE enableRecordingAllCompressions(sl::RecordingParameters& recParams);
+
+  /*! \brief start svo recording
+   */
+  void startRecording(const std::string& filename, std::string& info);
+
+  /*! \brief stop svo recording if any recording is happening
+   */
+  void stopRecording();
+
+  void updateRecordingStatus();
+
+  // bool start_recording_ = false;
+  bool stop_recording_ = false;
   bool mRecording = false;
   sl::RecordingStatus mRecStatus;
   sl::SVO_COMPRESSION_MODE mSvoComprMode;
