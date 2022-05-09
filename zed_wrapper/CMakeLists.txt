@@ -44,7 +44,6 @@ include_directories(
 ###############################################################################
 # EXECUTABLE
 
-add_definitions(-std=c++11)
 set(LINK_LIBRARIES
   ${catkin_LIBRARIES}
 )

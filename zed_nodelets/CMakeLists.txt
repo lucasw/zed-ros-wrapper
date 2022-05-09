@@ -112,7 +112,7 @@ set(INCLUDE_DIRS
 ###############################################################################
 # ZED WRAPPER NODELET
 
-add_definitions(-std=c++11 -Wno-deprecated-declarations)
+add_definitions(-Wno-deprecated-declarations)
 set(LINK_LIBRARIES
   ${catkin_LIBRARIES}
   ${ZED_LIBRARIES}
