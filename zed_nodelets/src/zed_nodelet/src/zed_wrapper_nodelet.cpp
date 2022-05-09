@@ -434,7 +434,7 @@ void ZEDWrapperNodelet::initDynamicReconfigure()
 {
   mDynRecServer = boost::make_shared<dynamic_reconfigure::Server<zed_nodelets::ZedConfig>>(mDynServerMutex);
   dynamic_reconfigure::Server<zed_nodelets::ZedConfig>::CallbackType f;
-  f = boost::bind(&ZEDWrapperNodelet::callback_dynamicReconf, this, _1, _2);
+  f = boost::bind(&ZEDWrapperNodelet::callback_dynamicReconf, this, boost::placeholders::_1, boost::placeholders::_2);
   mDynRecServer->setCallback(f);
 #if 0
   // TODO(lucasw) don't care about these config defaults, want the class member defaults

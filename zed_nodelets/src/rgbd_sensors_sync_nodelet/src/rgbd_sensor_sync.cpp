@@ -83,7 +83,9 @@ void RgbdSensorsSyncNodelet::onInit()
           ApproxFullSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubImu,
           mSubMag);
       mApproxFullSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackFull, this, _1, _2, _3, _4, _5, _6));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackFull, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5, boost::placeholders::_6));
 
       NODELET_DEBUG("RGB + Depth + IMU + Magnetometer Sync");
     }
@@ -94,7 +96,9 @@ void RgbdSensorsSyncNodelet::onInit()
       mApproxRgbdImuSync = new message_filters::Synchronizer<ApproxRgbdImuSyncPolicy>(
           ApproxRgbdImuSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubImu);
       mApproxRgbdImuSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDIMU, this, _1, _2, _3, _4, _5));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDIMU, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5));
     }
     else if (mUseMag)
     {
@@ -103,7 +107,9 @@ void RgbdSensorsSyncNodelet::onInit()
       mApproxRgbdMagSync = new message_filters::Synchronizer<ApproxRgbdMagSyncPolicy>(
           ApproxRgbdMagSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubMag);
       mApproxRgbdMagSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDMag, this, _1, _2, _3, _4, _5));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDMag, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5));
     }
     else
     {
@@ -111,7 +117,8 @@ void RgbdSensorsSyncNodelet::onInit()
 
       mApproxRgbdSync = new message_filters::Synchronizer<ApproxRgbdSyncPolicy>(
           ApproxRgbdSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo);
-      mApproxRgbdSync->registerCallback(boost::bind(&RgbdSensorsSyncNodelet::callbackRGBD, this, _1, _2, _3, _4));
+      mApproxRgbdSync->registerCallback(boost::bind(&RgbdSensorsSyncNodelet::callbackRGBD, this,
+          boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4));
     }
   }
   else
@@ -124,7 +131,9 @@ void RgbdSensorsSyncNodelet::onInit()
           ExactFullSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubImu,
           mSubMag);
       mExactFullSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackFull, this, _1, _2, _3, _4, _5, _6));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackFull, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5, boost::placeholders::_6));
 
       NODELET_DEBUG("RGB + Depth + IMU + Magnetometer Sync");
     }
@@ -135,7 +144,9 @@ void RgbdSensorsSyncNodelet::onInit()
       mExactRgbdImuSync = new message_filters::Synchronizer<ExactRgbdImuSyncPolicy>(
           ExactRgbdImuSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubImu);
       mExactRgbdImuSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDIMU, this, _1, _2, _3, _4, _5));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDIMU, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5));
     }
     else if (mUseMag)
     {
@@ -144,7 +155,9 @@ void RgbdSensorsSyncNodelet::onInit()
       mExactRgbdMagSync = new message_filters::Synchronizer<ExactRgbdMagSyncPolicy>(
           ExactRgbdMagSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo, mSubMag);
       mExactRgbdMagSync->registerCallback(
-          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDMag, this, _1, _2, _3, _4, _5));
+          boost::bind(&RgbdSensorsSyncNodelet::callbackRGBDMag, this,
+              boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3,
+              boost::placeholders::_4, boost::placeholders::_5));
     }
     else
     {
@@ -152,7 +165,8 @@ void RgbdSensorsSyncNodelet::onInit()
 
       mExactRgbdSync = new message_filters::Synchronizer<ExactRgbdSyncPolicy>(
           ExactRgbdSyncPolicy(mQueueSize), mSubRgbImage, mSubDepthImage, mSubRgbCamInfo, mSubDepthCamInfo);
-      mExactRgbdSync->registerCallback(boost::bind(&RgbdSensorsSyncNodelet::callbackRGBD, this, _1, _2, _3, _4));
+      mExactRgbdSync->registerCallback(boost::bind(&RgbdSensorsSyncNodelet::callbackRGBD, this,
+          boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4));
     }
   }
 
