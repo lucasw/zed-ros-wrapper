@@ -79,78 +79,55 @@ catkin_package(
     zed_interfaces
 )
 
-###############################################################################
-# SOURCES
+add_definitions(-Wno-deprecated-declarations)
 
-set(RGBD_SENS_DEMUX_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_demux_nodelet/src/rgbd_sensor_demux.cpp)
-set(RGBD_SENS_SYNC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_sync_nodelet/src/rgbd_sensor_sync.cpp)
-set(TOOLS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/src/sl_tools.cpp)
-set(ZED_NODELET_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_nodelet/src/zed_wrapper_nodelet.cpp)
-
-###############################################################################
-
-###############################################################################
-# INCLUDES
-
-# Specify locations of header files.
-set(INCLUDE_DIRS
-    ${catkin_INCLUDE_DIRS}
-    ${CUDA_INCLUDE_DIRS}
-    ${ZED_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_nodelet/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_sync_nodelet/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rgbd_sensors_demux_nodelet/include
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${ZED_INCLUDE_DIRS}
 )
 
-# TODO(lucasw) I think these are already known
+add_library(${PROJECT_NAME}
+  src/rgbd_sensor_demux.cpp
+  src/rgbd_sensor_sync.cpp
+  src/sl_tools.cpp
+  src/zed_wrapper_nodelet.cpp
+)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+
 # link_directories(${ZED_LIBRARY_DIR})
-# link_directories(${CUDA_LIBRARY_DIRS})
-
-###############################################################################
-
-###############################################################################
-# ZED WRAPPER NODELET
-
-add_definitions(-Wno-deprecated-declarations)
-set(LINK_LIBRARIES
+# TODO(lucasw) did the zed library libsl_nodelet.so used to get the full
+# path baked in here?  It isn't getting found later during install,
+# but putting the zed sdk lib dir on LD_LIBRARY_PATH makes it found
+# where it is failing to be found)
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${ZED_LIBRARIES}
   ${CUDA_LIBRARIES}
 )
 
-add_library(ZEDNodelets
-    ${RGBD_SENS_DEMUX_SRC}
-    ${RGBD_SENS_SYNC_SRC}
-    ${TOOLS_SRC}
-    ${ZED_NODELET_SRC}
-)
-target_include_directories(ZEDNodelets PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(ZEDNodelets ${LINK_LIBRARIES})
-add_dependencies(
-    ZEDNodelets
-    ${catkin_EXPORTED_TARGETS}
-    ${PROJECT_NAME}_gencfg
-)
-
-###############################################################################
-
-#Add all files in subdirectories of the project in
-# a dummy_target so qtcreator have access to all files
-file(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
-add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
+# TODO(lucasw) not sure if this is needed
+# if(catkin_EXPORTED_LIBRARIES)
+# message(STATUS "${catkin_EXPORTED_TARGETS}")
+# add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+# endif()
 
 ###############################################################################
 # INSTALL
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
 install(TARGETS
-  ZEDNodelets
+  ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
 install(FILES
-  nodelet_plugins.xml
+  nodelet_${PROJECT_NAME}.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-

@@ -18,7 +18,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "rgbd_sensor_sync.hpp"
+#include "zed_nodelets/rgbd_sensor_sync.hpp"
 
 #ifndef NDEBUG
 #include <ros/console.h>
@@ -456,3 +456,6 @@ void RgbdSensorsSyncNodelet::callbackFull(const sensor_msgs::ImageConstPtr &rgb,
 }
 
 }  // namespace zed_nodelets
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsSyncNodelet, nodelet::Nodelet)

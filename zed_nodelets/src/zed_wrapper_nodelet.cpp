@@ -18,7 +18,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "zed_wrapper_nodelet.hpp"
+#include "zed_nodelets/zed_wrapper_nodelet.hpp"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <chrono>
@@ -3819,3 +3819,6 @@ bool ZEDWrapperNodelet::on_toggle_led(zed_interfaces::toggle_led::Request& req,
 }
 
 }  // namespace zed_nodelets
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(zed_nodelets::ZEDWrapperNodelet, nodelet::Nodelet);

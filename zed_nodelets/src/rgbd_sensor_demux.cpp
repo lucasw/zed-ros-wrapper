@@ -18,7 +18,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "rgbd_sensor_demux.hpp"
+#include "zed_nodelets/rgbd_sensor_demux.hpp"
 
 #ifndef NDEBUG
 #include <ros/console.h>
@@ -127,3 +127,6 @@ void RgbdSensorsDemuxNodelet::msgCallback(const zed_interfaces::RGBDSensorsPtr &
 }
 
 }  // namespace zed_nodelets
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsDemuxNodelet, nodelet::Nodelet)

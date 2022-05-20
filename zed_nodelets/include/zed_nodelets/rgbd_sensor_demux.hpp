@@ -69,7 +69,4 @@ private:
 
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsDemuxNodelet, nodelet::Nodelet)
-
 #endif  // RGBD_SENSOR_DEMUX_HPP

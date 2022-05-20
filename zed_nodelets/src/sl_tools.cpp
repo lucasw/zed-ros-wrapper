@@ -18,7 +18,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "sl_tools.h"
+#include "zed_nodelets/sl_tools.h"
 
 #include <sys/stat.h>
 #include <sstream>

@@ -657,7 +657,4 @@ private:
 };  // class ZEDROSWrapperNodelet
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(zed_nodelets::ZEDWrapperNodelet, nodelet::Nodelet);
-
 #endif  // ZED_WRAPPER_NODELET_H

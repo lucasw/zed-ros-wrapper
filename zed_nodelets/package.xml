@@ -41,6 +41,6 @@
     <exec_depend>image_transport_plugins</exec_depend>
 
     <export>
-         <nodelet plugin="${prefix}/nodelet_plugins.xml"/>
+         <nodelet plugin="${prefix}/nodelet_zed_nodelets.xml"/>
     </export>
 </package>

@@ -1,4 +1,4 @@
-<library path="lib/libZEDNodelets">
+<library path="lib/libzed_nodelets">
     <class name="zed_nodelets/ZEDWrapperNodelet"
          type="zed_nodelets::ZEDWrapperNodelet"
          base_class_type="nodelet::Nodelet">

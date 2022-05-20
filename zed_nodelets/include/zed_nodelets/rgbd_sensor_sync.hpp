@@ -147,7 +147,4 @@ private:
 
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsSyncNodelet, nodelet::Nodelet)
-
 #endif  // RGBD_SENSOR_SYNC_HPP
