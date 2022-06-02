@@ -84,6 +84,7 @@ add_definitions(-Wno-deprecated-declarations)
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${CUDA_INCLUDE_DIRS}
   ${ZED_INCLUDE_DIRS}
 )
 
