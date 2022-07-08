@@ -250,13 +250,7 @@ bool ZEDWrapperNodelet::initCamera()
         // Ctrl+C check
         if (!mNhNs.ok())
         {
-          // TODO(lucasw) mStopNode is never looked at
-          mStopNode = true;  // Stops other threads
-
-          // TODO(lucasw) make stop() method
-          std::lock_guard<std::mutex> lock(mCloseZedMutex);
-          NODELET_DEBUG("Closing ZED");
-          mZed.close();
+          stop();
 
           NODELET_DEBUG("ZED pool thread finished");
           return false;
@@ -404,13 +398,7 @@ bool ZEDWrapperNodelet::initZedParams()
 
     if (!mNhNs.ok())
     {
-      mStopNode = true;  // Stops other threads
-
-      std::lock_guard<std::mutex> lock(mCloseZedMutex);
-      NODELET_DEBUG("Closing ZED");
-      mZed.close();
-
-      NODELET_DEBUG("ZED pool thread finished");
+      stop();
       return false;
     }
 
@@ -2294,6 +2282,7 @@ void ZEDWrapperNodelet::callback_pubPath(const ros::TimerEvent& e)
 void ZEDWrapperNodelet::callback_pubSensorsData(const ros::TimerEvent& e)
 {
   // NODELET_INFO("callback_pubSensorsData");
+  // TODO(lucasw) the only other user of this mutex is stop()
   std::lock_guard<std::mutex> lock(mCloseZedMutex);
 
   if (!mZed.isOpened())
@@ -2946,6 +2935,15 @@ void ZEDWrapperNodelet::updateRecordingStatus()
   mDiagUpdater.force_update();
 }
 
+void ZEDWrapperNodelet::stop()
+{
+  std::lock_guard<std::mutex> lock(mCloseZedMutex);
+  // TODO(lucasw) nothing looks at mStopNode
+  mStopNode = true;
+  stopRecording();
+  mZed.close();
+}
+
 // TODO(lucasw) turn this into a ros update
 void ZEDWrapperNodelet::device_poll_thread_func()
 {
@@ -3084,6 +3082,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
         // TODO(lucasw) if the status is END OF SVO FILE REACHED then loop it optionally
         if (mGrabStatus == sl::ERROR_CODE::END_OF_SVOFILE_REACHED) {
+          stop();
           return;
         }
 
@@ -3091,10 +3090,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
 
         if ((ros::Time::now() - mPrevFrameTimestamp).toSec() > 5 && !mSvoMode)
         {
-          {
-            std::lock_guard<std::mutex> lock(mCloseZedMutex);
-            mZed.close();
-          }
+          stop();
 
           mConnStatus = sl::ERROR_CODE::CAMERA_NOT_DETECTED;
 
@@ -3102,14 +3098,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
           {
             if (!mNhNs.ok())
             {
-              mStopNode = true;
-
-              std::lock_guard<std::mutex> lock(mCloseZedMutex);
-              NODELET_DEBUG("Closing ZED");
-              stopRecording();
-              mZed.close();
-
-              NODELET_DEBUG("ZED pool thread finished");
+              stop();
               return;
             }
 
@@ -3518,14 +3507,7 @@ void ZEDWrapperNodelet::device_poll_thread_func()
     mDiagUpdater.update();
   }  // while loop
 
-  mStopNode = true;  // Stops other threads
-
-  std::lock_guard<std::mutex> lock(mCloseZedMutex);
-  NODELET_DEBUG("Closing ZED");
-  stopRecording();
-  mZed.close();
-
-  NODELET_DEBUG("ZED pool thread finished");
+  stop();
 }
 
 void ZEDWrapperNodelet::callback_updateDiagnostic(diagnostic_updater::DiagnosticStatusWrapper& stat)

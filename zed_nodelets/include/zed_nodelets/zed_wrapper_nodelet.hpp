@@ -149,6 +149,10 @@ protected:
    */
   bool updateCameraWithDynParams();
 
+  /*! \brief stop the camera
+   */
+  void stop();
+
   /*! \brief ZED camera polling thread function
    */
   void device_poll_thread_func();
