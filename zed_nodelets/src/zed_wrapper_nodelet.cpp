@@ -2391,12 +2391,16 @@ void ZEDWrapperNodelet::publishSensData(ros::Time t)
     {
       publishPoseFrame(mMap2OdomTransf, ts_imu);  // publish the odometry Frame in map frame
     }
+  }
 
+  if (new_imu_data)
+  {
     if (mPublishImuTf && !mStaticImuFramePublished)
     {
       publishStaticImuFrame(ts_imu);
     }
   }
+
   // <---- Publish odometry tf only if enabled
 
   if (mZedRealCamModel == sl::MODEL::ZED2 || mZedRealCamModel == sl::MODEL::ZED2i)
