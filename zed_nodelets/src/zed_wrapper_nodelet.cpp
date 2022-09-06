@@ -3032,8 +3032,8 @@ void ZEDWrapperNodelet::device_poll_thread_func()
       std::lock_guard<std::mutex> lock(mPosTrkMutex);
 
       // Note: ones tracking is started it is never stopped anymore to not lose tracking information
-      bool computeTracking = (mPosTrackingEnabled || mPosTrackingActivated || (mComputeDepth & mDepthStabilization) ||
-                              poseSubnumber > 0 || poseCovSubnumber > 0 || odomSubnumber > 0 || pathSubNumber > 0);
+      bool computeTracking = ((mPosTrackingEnabled || mPosTrackingActivated || (mComputeDepth & mDepthStabilization)) &&
+                              (poseSubnumber > 0 || poseCovSubnumber > 0 || odomSubnumber > 0 || pathSubNumber > 0));
 
       // Start the tracking?
       if ((computeTracking) && !mPosTrackingActivated && (mDepthMode != sl::DEPTH_MODE::NONE))
