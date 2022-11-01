@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       - origin: the xyz/rpy offset from the parent link
   -->
   <xacro:macro name="zed_camera" params="name=zed model=zed parent *origin">
+    <xacro:zed_mat name="${name}" />
     <xacro:if value="${model == 'zed'}">
       <xacro:property name="baseline" value="0.12" />
       <xacro:property name="height" value="0.03" />
@@ -77,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <geometry>
           <mesh filename="package://zed_interfaces/meshes/${model}.stl" />
         </geometry>
-        <material name="${model}_mat" />
+        <material name="${name}_${model}_mat" />
       </visual>
       <collision>
         <geometry>

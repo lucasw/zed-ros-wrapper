@@ -18,17 +18,21 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<robot>
-    <material name="zed_mat">
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="zed_mat" params="name">
+    <material name="${name}_zed_mat">
         <color rgba="0.8 0.8 0.8 0.8"/>
     </material>
-    <material name="zedm_mat">
+    <material name="${name}_zedm_mat">
         <color rgba="0 0 0 0.9"/>
     </material>
-    <material name="zed2_mat">
+    <material name="${name}_zed2_mat">
         <color rgba="0.25 0.25 0.25 0.99"/>
     </material>
-    <material name="zed2i_mat">
+    <material name="${name}_zed2i_mat">
         <color rgba="0.25 0.25 0.25 0.99"/>
     </material>
+    <!--
+    -->
+  </xacro:macro>
 </robot>
