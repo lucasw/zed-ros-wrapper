@@ -128,5 +128,5 @@ void RgbdSensorsDemuxNodelet::msgCallback(const zed_interfaces::RGBDSensorsPtr &
 
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsDemuxNodelet, nodelet::Nodelet)

@@ -457,5 +457,5 @@ void RgbdSensorsSyncNodelet::callbackFull(const sensor_msgs::ImageConstPtr &rgb,
 
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(zed_nodelets::RgbdSensorsSyncNodelet, nodelet::Nodelet)

@@ -3806,5 +3806,5 @@ bool ZEDWrapperNodelet::on_toggle_led(zed_interfaces::toggle_led::Request& req,
 
 }  // namespace zed_nodelets
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(zed_nodelets::ZEDWrapperNodelet, nodelet::Nodelet);
