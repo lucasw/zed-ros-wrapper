@@ -61,15 +61,15 @@ void ZEDWrapperNodelet::initAllPublishers()
   mPubRawLeft = it_zed.advertiseCamera("left_raw/image_raw_color", 1);
   mPubRight = it_zed.advertiseCamera("right/image_rect_color", 1);
   mPubRawRight = it_zed.advertiseCamera("right_raw/image_raw_color", 1);
-  mPubDepth = it_zed.advertiseCamera("depth/depth_registered", 1);
-  mPubConfMap = it_zed.advertiseCamera("confidence/confidence_map", 1);
+  mPubDepth = it_zed.advertiseCamera("depth/image", 1);
+  mPubConfMap = it_zed.advertiseCamera("confidence/image", 1);
 
   if (mUseSimTime)
   {
     mPubSimClock = mNhNs.advertise<rosgraph_msgs::Clock>("/clock", 2);
   }
 
-  mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>("disparity/disparity_topic",
+  mPubDisparity = mNhNs.advertise<stereo_msgs::DisparityImage>("disparity/image",
       static_cast<int>(mVideoDepthFreq));
   mPubPose = mNhNs.advertise<geometry_msgs::PoseStamped>("pose", 1);
   mPubPoseCov = mNhNs.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose_with_covariance", 1);
