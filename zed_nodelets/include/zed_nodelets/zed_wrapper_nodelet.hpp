@@ -599,6 +599,8 @@ private:
   bool mUpdateDynParams = false;
   bool mPublishingData = false;
 
+  std::string mLeftFramePostfix = "_left_camera_optical_frame";
+  std::string mRightFramePostfix = "_right_camera_optical_frame";
   // SVO recording
   /*! \brief convenience function to try different compressions when starting recording
    */

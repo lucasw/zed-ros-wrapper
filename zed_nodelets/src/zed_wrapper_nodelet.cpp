@@ -701,12 +701,16 @@ void ZEDWrapperNodelet::setupCoordinateFrames()
   mNhNs.param<std::string>("pos_tracking/odometry_frame", mOdometryFrameId, "odom");
   mNhNs.param<std::string>("general/base_frame", mBaseFrameId, "base_link");
 
+  mNhNs.getParam("left_frame_postfix", mLeftFramePostfix);
+  mNhNs.getParam("right_frame_postfix", mRightFramePostfix);
+  ROS_WARN_STREAM("frame postfixes:" << mLeftFramePostfix << " " << mRightFramePostfix);
+
   mCameraFrameId = mCameraName + "_camera_center";
   mImuFrameId = mCameraName + "_imu_link";
   mLeftCamFrameId = mCameraName + "_left_camera_frame";
-  mLeftCamOptFrameId = mCameraName + "_left_camera_optical_frame";
+  mLeftCamOptFrameId = mCameraName + mLeftFramePostfix;
   mRightCamFrameId = mCameraName + "_right_camera_frame";
-  mRightCamOptFrameId = mCameraName + "_right_camera_optical_frame";
+  mRightCamOptFrameId = mCameraName + mRightFramePostfix;
 
   mBaroFrameId = mCameraName + "_baro_link";
   mMagFrameId = mCameraName + "_mag_link";
