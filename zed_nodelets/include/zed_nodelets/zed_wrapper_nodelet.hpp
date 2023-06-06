@@ -494,7 +494,7 @@ private:
   sl::RESOLUTION mCamResol;
   int mCamFrameRate;
   sl::DEPTH_MODE mDepthMode;
-  sl::SENSING_MODE mCamSensingMode;
+  // sl::SENSING_MODE mCamSensingMode;
   int mGpuId;
   int mZedId;
   int mDepthStabilization;
@@ -595,7 +595,6 @@ private:
   bool mAreaMemory;
   bool mInitOdomWithPose;
   bool mResetOdom = false;
-  bool mUseOldExtrinsic = false;
   bool mUpdateDynParams = false;
   bool mPublishingData = false;
 

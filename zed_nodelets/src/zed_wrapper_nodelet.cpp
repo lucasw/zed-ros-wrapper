@@ -582,10 +582,6 @@ void ZEDWrapperNodelet::setupVideo()
 
   mNhNs.getParam("video/img_downsample_factor", mCamImageResizeFactor);
   NODELET_INFO_STREAM(" * Image resample factor\t-> " << mCamImageResizeFactor);
-
-  mNhNs.getParam("video/extrinsic_in_camera_frame", mUseOldExtrinsic);
-  NODELET_INFO_STREAM(" * Extrinsic param. frame\t-> "
-                      << (mUseOldExtrinsic ? "X RIGHT - Y DOWN - Z FWD" : "X FWD - Y LEFT - Z UP"));
 }
 
 void ZEDWrapperNodelet::setupDepth()
@@ -596,10 +592,10 @@ void ZEDWrapperNodelet::setupDepth()
   mNhNs.getParam("depth/quality", depth_mode);
   mDepthMode = static_cast<sl::DEPTH_MODE>(depth_mode);
   NODELET_INFO_STREAM(" * Depth quality\t\t-> " << sl::toString(mDepthMode).c_str());
-  int sensing_mode;
-  mNhNs.getParam("depth/sensing_mode", sensing_mode);
-  mCamSensingMode = static_cast<sl::SENSING_MODE>(sensing_mode);
-  NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(mCamSensingMode).c_str());
+  // int sensing_mode;
+  // mNhNs.getParam("depth/sensing_mode", sensing_mode);
+  // mCamSensingMode = static_cast<sl::SENSING_MODE>(sensing_mode);
+  // NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(mCamSensingMode).c_str());
   mNhNs.getParam("depth/openni_depth_mode", mOpenniDepthMode);
   NODELET_INFO_STREAM(" * OpenNI mode\t\t\t-> " << (mOpenniDepthMode ? "ENABLED" : "DISABLED"));
   mNhNs.getParam("depth/depth_stabilization", mDepthStabilization);
@@ -1710,18 +1706,6 @@ void ZEDWrapperNodelet::fillCamInfo(sl::Camera& zed, sensor_msgs::CameraInfoPtr 
 #else
   if (rawParam)
   {
-    if (mUseOldExtrinsic)
-    {  // Camera frame (Z forward, Y down, X right)
-
-      std::vector<float> R_ = sl_tools::convertRodrigues(zedParam.R);
-      float* p = R_.data();
-
-      for (int i = 0; i < 9; i++)
-      {
-        rightCamInfoMsg->R[i] = p[i];
-      }
-    }
-    else
     {  // ROS frame (X forward, Z up, Y left)
       for (int i = 0; i < 9; i++)
       {
@@ -2758,7 +2742,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
   std::lock_guard<std::mutex> lock(mDynParMutex);
   bool updated = false;
 
-  const int brightness = mZed.getCameraSettings(sl::VIDEO_SETTINGS::BRIGHTNESS);
+  int brightness;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::BRIGHTNESS, brightness);
   if (brightness != mCamBrightness)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::BRIGHTNESS, mCamBrightness);
@@ -2766,7 +2751,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
     updated = true;
   }
 
-  const int contrast = mZed.getCameraSettings(sl::VIDEO_SETTINGS::CONTRAST);
+  int contrast;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::CONTRAST, contrast);
   if (contrast != mCamContrast)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::CONTRAST, mCamContrast);
@@ -2774,7 +2760,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
     updated = true;
   }
 
-  const int hue = mZed.getCameraSettings(sl::VIDEO_SETTINGS::HUE);
+  int hue;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::HUE, hue);
   if (hue != mCamHue)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::HUE, mCamHue);
@@ -2782,7 +2769,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
     updated = true;
   }
 
-  const int saturation = mZed.getCameraSettings(sl::VIDEO_SETTINGS::SATURATION);
+  int saturation;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::SATURATION, saturation);
   if (saturation != mCamSaturation)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::SATURATION, mCamSaturation);
@@ -2790,7 +2778,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
     updated = true;
   }
 
-  const int sharpness = mZed.getCameraSettings(sl::VIDEO_SETTINGS::SHARPNESS);
+  int sharpness;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::SHARPNESS, sharpness);
   if (sharpness != mCamSharpness)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::SHARPNESS, mCamSharpness);
@@ -2799,7 +2788,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
   }
 
 #if (ZED_SDK_MAJOR_VERSION == 3 && ZED_SDK_MINOR_VERSION >= 1)
-  const int gamma = mZed.getCameraSettings(sl::VIDEO_SETTINGS::GAMMA);
+  int gamma;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::GAMMA, gamma);
   if (gamma != mCamGamma)
   {
     mZed.setCameraSettings(sl::VIDEO_SETTINGS::GAMMA, mCamGamma);
@@ -2818,7 +2808,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
   }
   else
   {
-    const int exposure = mZed.getCameraSettings(sl::VIDEO_SETTINGS::EXPOSURE);
+    int exposure;
+    mZed.getCameraSettings(sl::VIDEO_SETTINGS::EXPOSURE, exposure);
     if (exposure != mCamExposure)
     {
       mZed.setCameraSettings(sl::VIDEO_SETTINGS::EXPOSURE, mCamExposure);
@@ -2826,7 +2817,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
       updated = true;
     }
 
-    const int gain = mZed.getCameraSettings(sl::VIDEO_SETTINGS::GAIN);
+    int gain;
+    mZed.getCameraSettings(sl::VIDEO_SETTINGS::GAIN, gain);
     if (gain != mCamGain)
     {
       mZed.setCameraSettings(sl::VIDEO_SETTINGS::GAIN, mCamGain);
@@ -2845,7 +2837,8 @@ bool ZEDWrapperNodelet::updateCameraWithDynParams()
   }
   else
   {
-    const int wb = mZed.getCameraSettings(sl::VIDEO_SETTINGS::WHITEBALANCE_TEMPERATURE);
+    int wb;
+    mZed.getCameraSettings(sl::VIDEO_SETTINGS::WHITEBALANCE_TEMPERATURE, wb);
     if (wb != mCamWB)
     {
       mZed.setCameraSettings(sl::VIDEO_SETTINGS::WHITEBALANCE_TEMPERATURE, mCamWB);
@@ -3000,7 +2993,8 @@ void ZEDWrapperNodelet::device_poll_thread_func()
   // the reference camera is the Left one (next to the ZED logo)
 
   sl::RuntimeParameters runParams;
-  runParams.sensing_mode = static_cast<sl::SENSING_MODE>(mCamSensingMode);
+  // ROS_WARN_STREAM(runParams.sensing_mode);
+  // runParams.sensing_mode = static_cast<sl::SENSING_MODE>(mCamSensingMode);
 
   // TODO(lucasw) is there a call to mZed in here that rolls it forward a frame in mSvoMode, or does it
   // have a timer and keeps time independently, can only do real time?
@@ -3801,7 +3795,8 @@ bool ZEDWrapperNodelet::on_toggle_led(zed_interfaces::toggle_led::Request& req,
     return false;
   }
 
-  int status = mZed.getCameraSettings(sl::VIDEO_SETTINGS::LED_STATUS);
+  int status;
+  mZed.getCameraSettings(sl::VIDEO_SETTINGS::LED_STATUS, status);
   int new_status = status == 0 ? 1 : 0;
   mZed.setCameraSettings(sl::VIDEO_SETTINGS::LED_STATUS, new_status);
 

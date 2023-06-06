@@ -81,6 +81,7 @@ catkin_package(
 
 add_definitions(-Wno-deprecated-declarations)
 
+message(STATUS "ZED_INCLUDE_DIRS ${ZED_INCLUDE_DIRS}")
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
