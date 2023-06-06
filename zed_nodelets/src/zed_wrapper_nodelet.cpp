@@ -524,7 +524,7 @@ void ZEDWrapperNodelet::setupGeneral()
   mCamResol = static_cast<sl::RESOLUTION>(resol);
   NODELET_INFO_STREAM(" * Camera Resolution\t\t-> " << sl::toString(mCamResol).c_str());
   mNhNs.getParam("general/grab_frame_rate", mCamFrameRate);
-  checkResolFps();
+  // checkResolFps();
   NODELET_INFO_STREAM(" * Camera Grab Framerate\t-> " << mCamFrameRate);
 
   mNhNs.getParam("general/gpu_id", mGpuId);
